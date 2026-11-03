@@ -8,20 +8,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -33,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,183 +59,162 @@ fun App() {
     }
 
     MaterialTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = Color(0xFF1A1C1E)
-        ) {
-            // windowInsetsPadding(WindowInsets.safeDrawing) zajisti, ze nic nezasahuje do vyrezu kamery ani okraju
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .background(Color(0xFFD8DADF), RoundedCornerShape(20.dp))
-                    .border(3.dp, Color(0xFF8C1D1D), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                TopConsoleBar(
-                    snapshot = uiState,
-                    onStartA = {
-                        engine.startNewGame(GameMode.GAME_A)
-                        uiState = engine.state
-                    },
-                    onStartB = {
-                        engine.startNewGame(GameMode.GAME_B)
-                        uiState = engine.state
-                    },
-                    onToggleSound = {
-                        engine.toggleSound()
-                        uiState = engine.state
-                    },
-                    onToggleHaptics = {
-                        engine.toggleHaptics()
-                        uiState = engine.state
-                    },
-                    onReset = {
-                        engine.resetToDemo()
-                        uiState = engine.state
-                    }
-                )
+        // Kovove telo konzole roztazene pres 100 % celeho displeje bez cernych okraju
+        val metallicBrush = Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFFE4E6EB),
+                Color(0xFFD2D5DC),
+                Color(0xFFC6CAD2)
+            )
+        )
 
-                Row(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(metallicBrush)
+                .border(4.dp, Color(0xFF8C1D1D))
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            TopConsoleBar(
+                snapshot = uiState,
+                onStartA = {
+                    engine.startNewGame(GameMode.GAME_A)
+                    uiState = engine.state
+                },
+                onStartB = {
+                    engine.startNewGame(GameMode.GAME_B)
+                    uiState = engine.state
+                },
+                onToggleSound = {
+                    engine.toggleSound()
+                    uiState = engine.state
+                },
+                onToggleHaptics = {
+                    engine.toggleHaptics()
+                    uiState = engine.state
+                },
+                onReset = {
+                    engine.resetToDemo()
+                    uiState = engine.state
+                }
+            )
+
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Leva dvojice cervenych tlacitek
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(84.dp),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    RedArcadeButton(
+                        label = "↖",
+                        caption = "HORNÍ LEVÝ",
+                        isActive = uiState.wolfPosition == BasketPosition.TOP_LEFT,
+                        onClick = {
+                            engine.moveWolf(BasketPosition.TOP_LEFT)
+                            uiState = engine.state
+                        }
+                    )
+                    RedArcadeButton(
+                        label = "↙",
+                        caption = "DOLNÍ LEVÝ",
+                        isActive = uiState.wolfPosition == BasketPosition.BOTTOM_LEFT,
+                        onClick = {
+                            engine.moveWolf(BasketPosition.BOTTOM_LEFT)
+                            uiState = engine.state
+                        }
+                    )
+                }
+
+                // Velky LCD displej uprostred roztazeny na maximum mezi tlacitky
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .fillMaxHeight()
+                        .padding(horizontal = 8.dp)
+                        .background(Color(0xFF2E332F), RoundedCornerShape(14.dp))
+                        .border(3.dp, Color(0xFF8C1D1D), RoundedCornerShape(14.dp))
+                        .padding(5.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Leve ovladaci tlacitka konzole
-                    Column(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .width(76.dp),
-                        verticalArrangement = Arrangement.SpaceEvenly,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        RedArcadeButton(
-                            label = "↖",
-                            caption = "HORNÍ LEVÝ",
-                            isActive = uiState.wolfPosition == BasketPosition.TOP_LEFT,
-                            onClick = {
-                                engine.moveWolf(BasketPosition.TOP_LEFT)
-                                uiState = engine.state
-                            }
-                        )
-                        RedArcadeButton(
-                            label = "↙",
-                            caption = "DOLNÍ LEVÝ",
-                            isActive = uiState.wolfPosition == BasketPosition.BOTTOM_LEFT,
-                            onClick = {
-                                engine.moveWolf(BasketPosition.BOTTOM_LEFT)
-                                uiState = engine.state
-                            }
-                        )
-                    }
-
-                    // Stredovy LCD displej roztazeny na celou plochu ramecku
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(horizontal = 6.dp)
-                            .background(Color(0xFF323633), RoundedCornerShape(14.dp))
-                            .border(2.5.dp, Color(0xFF8C1D1D), RoundedCornerShape(14.dp))
-                            .padding(5.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        JenPockejLcdScreen(
-                            snapshot = uiState,
-                            onCornerTap = { target ->
-                                engine.moveWolf(target)
-                                uiState = engine.state
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        )
-
-                        if (!uiState.isRunning) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .padding(bottom = 4.dp)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xD91C2318))
-                                    .clickable {
-                                        engine.startNewGame(uiState.mode)
-                                        uiState = engine.state
-                                    }
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                            ) {
-                                val promptText = if (uiState.isGameOver) {
-                                    "KONEC HRY (${uiState.score} b.) • KLEPNI PRO START"
-                                } else {
-                                    "DEMO REŽIM • KLEPNI PRO START HRY"
-                                }
-                                Text(
-                                    text = promptText,
-                                    color = Color(0xFFE4EDD5),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-
-                    // Prave ovladaci tlacitka konzole
-                    Column(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .width(76.dp),
-                        verticalArrangement = Arrangement.SpaceEvenly,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        RedArcadeButton(
-                            label = "↗",
-                            caption = "HORNÍ PRAVÝ",
-                            isActive = uiState.wolfPosition == BasketPosition.TOP_RIGHT,
-                            onClick = {
-                                engine.moveWolf(BasketPosition.TOP_RIGHT)
-                                uiState = engine.state
-                            }
-                        )
-                        RedArcadeButton(
-                            label = "↘",
-                            caption = "DOLNÍ PRAVÝ",
-                            isActive = uiState.wolfPosition == BasketPosition.BOTTOM_RIGHT,
-                            onClick = {
-                                engine.moveWolf(BasketPosition.BOTTOM_RIGHT)
-                                uiState = engine.state
-                            }
-                        )
-                    }
+                    JenPockejLcdScreen(
+                        snapshot = uiState,
+                        onCornerTap = { target ->
+                            engine.moveWolf(target)
+                            uiState = engine.state
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
 
-                // Spodni lista s rekordy a plnym copyrightem
-                Row(
+                // Prava dvojice cervenych tlacitek
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxHeight()
+                        .width(84.dp),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "REKORD A: ${uiState.highScoreA}  |  REKORD B: ${uiState.highScoreB}",
-                        color = Color(0xFF2B2D30),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                    RedArcadeButton(
+                        label = "↗",
+                        caption = "HORNÍ PRAVÝ",
+                        isActive = uiState.wolfPosition == BasketPosition.TOP_RIGHT,
+                        onClick = {
+                            engine.moveWolf(BasketPosition.TOP_RIGHT)
+                            uiState = engine.state
+                        }
                     )
-                    Text(
-                        text = "© 2026 Created by Pavel Mareš",
-                        color = Color(0xFF2B2D30),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1
+                    RedArcadeButton(
+                        label = "↘",
+                        caption = "DOLNÍ PRAVÝ",
+                        isActive = uiState.wolfPosition == BasketPosition.BOTTOM_RIGHT,
+                        onClick = {
+                            engine.moveWolf(BasketPosition.BOTTOM_RIGHT)
+                            uiState = engine.state
+                        }
                     )
                 }
+            }
+
+            // Spodni informacni lista v kovovem ramu
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val statusHint = when {
+                    uiState.isGameOver -> "KONEC HRY (${uiState.score} b.) • ZVOL HRA A / B"
+                    !uiState.isRunning -> "DEMO REŽIM • SPUŠŤĚNÍ TLAČÍTKEM HRA A / B"
+                    else -> "AKTIVNÍ: ${uiState.mode.label}"
+                }
+                Text(
+                    text = "REKORD A: ${uiState.highScoreA}  |  REKORD B: ${uiState.highScoreB}   •   $statusHint",
+                    color = Color(0xFF22252A),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "© 2026 Created by Pavel Mareš",
+                    color = Color(0xFF22252A),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
             }
         }
     }
@@ -256,31 +232,34 @@ private fun TopConsoleBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 2.dp),
+            .padding(horizontal = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.weight(1f)
+        ) {
             Text(
                 text = "ЭЛЕКТРОНИКА ИМ-02 • JEN POČKEJ!",
                 color = Color(0xFF8C1D1D),
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.ExtraBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            val statusLabel = if (snapshot.isRunning) snapshot.mode.label else "DEMO / ČAS"
             Text(
-                text = "Režim: $statusLabel • Ну, погоди!",
+                text = "(Ну, погоди!)",
                 color = Color(0xFF3E4247),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1
             )
         }
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             SmallSilverPillButton(
@@ -318,7 +297,7 @@ private fun SmallSilverPillButton(
     highlighted: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = if (highlighted) Color(0xFF9E2424) else Color(0xFF42464D)
+    val bgColor = if (highlighted) Color(0xFF9E2424) else Color(0xFF3F434A)
     val borderColor = if (highlighted) Color(0xFFFFD166) else Color(0xFF7B818A)
     Box(
         modifier = Modifier
@@ -326,7 +305,7 @@ private fun SmallSilverPillButton(
             .background(bgColor)
             .border(1.5.dp, borderColor, RoundedCornerShape(50))
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 10.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -354,25 +333,25 @@ private fun RedArcadeButton(
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(56.dp)
                 .clip(CircleShape)
                 .background(fill)
-                .border(2.5.dp, rim, CircleShape)
+                .border(3.dp, rim, CircleShape)
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = label,
                 color = Color.White,
-                fontSize = 19.sp,
+                fontSize = 21.sp,
                 fontWeight = FontWeight.ExtraBold
             )
         }
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = caption,
             color = Color(0xFF222426),
-            fontSize = 8.sp,
+            fontSize = 9.sp,
             fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center,
             maxLines = 1
