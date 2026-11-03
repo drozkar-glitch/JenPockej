@@ -8,14 +8,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -118,16 +116,16 @@ fun GameHubScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(outerFrameBrush)
-            .padding(6.dp)
+            .padding(5.dp)
             .background(consoleMetalBrush, RoundedCornerShape(12.dp))
             .border(2.dp, Color(0xFF8C887D), RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // HORNÍ HLAVIČKA ROZCESTNÍKU
+            // HORNÍ HLAVIČKA S PEVNOU VÝŠKOU 38.dp (nikdy nevytlačí karty her)
             HubHeaderBar(
                 highScoreA = highScoreA,
                 highScoreB = highScoreB,
@@ -137,7 +135,7 @@ fun GameHubScreen(
                 onToggleHaptics = onToggleHaptics
             )
 
-            // MŘÍŽKA 3 x 2 KARET HER
+            // MŘÍŽKA 3 x 2 KARET HER PŘES CELÝ STŘED OBRAZOVKY
             val allGames = ClassicGameId.entries
             Column(
                 modifier = Modifier
@@ -146,7 +144,6 @@ fun GameHubScreen(
                     .padding(vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // První řada (3 hry)
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -170,7 +167,6 @@ fun GameHubScreen(
                     }
                 }
 
-                // Druhá řada (3 hry)
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -195,27 +191,34 @@ fun GameHubScreen(
                 }
             }
 
-            // SPODNÍ PATIČKA S NÁPOVĚDOU A COPYRIGHTEM
+            // SPODNÍ PATIČKA S PEVNOU VÝŠKOU 18.dp
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+                    .height(18.dp)
+                    .padding(horizontal = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "TIP: Ve hře se vrátíš do tohoto výběru klepnutím na kulaté logo •ИМ vlevo nahoře",
+                    text = "TIP: Ve hře se vrátíš do výběru her klepnutím na kulaté logo •ИМ vlevo nahoře",
                     color = Color(0xFF424542),
                     fontSize = 9.sp,
+                    lineHeight = 10.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
                 Text(
                     text = "© 2026 Created by Pavel Mareš",
                     color = Color(0xFF232724),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 9.sp,
+                    lineHeight = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         }
@@ -232,18 +235,23 @@ private fun HubHeaderBar(
     onToggleHaptics: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(38.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Levý blok s logem a titulkem (má weight(1f), aby nikdy neutlačil pravá tlačítka)
         Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Kulaté logo •ИМ v hlavičce
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
                     .background(Color(0xFFD5D1C6))
                     .border(2.dp, Color(0xFF232724), CircleShape),
@@ -252,57 +260,64 @@ private fun HubHeaderBar(
                 Text(
                     text = "•ИМ",
                     color = Color(0xFF232724),
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
+                    lineHeight = 11.sp,
                     fontWeight = FontWeight.Black,
-                    fontStyle = FontStyle.Italic
+                    fontStyle = FontStyle.Italic,
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
 
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "KOLEKCE ЭЛЕКТРОНИКА",
-                        color = Color(0xFFB52B24),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        text = "•  RETRO KAPESNÍ HRY",
-                        color = Color(0xFF2E322E),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "KOLEKCE ЭЛЕКТРОНИКА  •  RETRO HRY",
+                    color = Color(0xFFB52B24),
+                    fontSize = 13.sp,
+                    lineHeight = 14.sp,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
+                )
                 Text(
                     text = "Vyber hru ze sbírky klasických digitálních konzolí",
-                    color = Color(0xFF4F534F),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium
+                    color = Color(0xFF4A4E4A),
+                    fontSize = 9.sp,
+                    lineHeight = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
 
-        // Přepínače Zvuku a Vibrací + celkový rekord
+        // Pravý blok: Rekord + jednořádková tlačítka Zvuk a Vibrace
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Box(
                 modifier = Modifier
+                    .height(28.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(Color(0xFFC6C2B7))
                     .border(1.dp, Color(0xFF8C887D), RoundedCornerShape(6.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .padding(horizontal = 8.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "REKORD ИМ-02:  A: $highScoreA  |  B: $highScoreB",
+                    text = "REKORD A: $highScoreA | B: $highScoreB",
                     color = Color(0xFF232724),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 9.sp,
+                    lineHeight = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
 
@@ -330,18 +345,22 @@ private fun HubTogglePill(
     val border = if (active) Color(0xFFB52B24) else Color(0xFF706D65)
     Box(
         modifier = Modifier
+            .height(28.dp)
             .clip(RoundedCornerShape(50))
             .background(bg)
             .border(1.5.dp, border, RoundedCornerShape(50))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
             color = Color.White,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold
+            fontSize = 9.sp,
+            lineHeight = 10.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }
@@ -356,11 +375,11 @@ private fun GameCatalogCard(
 ) {
     val cardBg = if (game.isAvailable) {
         Brush.verticalGradient(
-            listOf(Color(0xFFF2F0E8), Color(0xFFE2DFD5))
+            listOf(Color(0xFFF4F2EA), Color(0xFFE2DFD4))
         )
     } else {
         Brush.verticalGradient(
-            listOf(Color(0xFFD9D6CC), Color(0xFFCAC6BC))
+            listOf(Color(0xFFDAD7CD), Color(0xFFCAC6BC))
         )
     }
     val borderColor = if (game.isAvailable) Color(0xFFB52B24) else Color(0xFF949086)
@@ -372,23 +391,25 @@ private fun GameCatalogCard(
             .background(cardBg)
             .border(borderWidth, borderColor, RoundedCornerShape(10.dp))
             .clickable(enabled = game.isAvailable, onClick = onClick)
-            .padding(8.dp),
+            .padding(7.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Horní část karty: Vektorová mini-ikona konzole + názvy
+        // Horní část karty: Vektorová mini-konzole + popis hry
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             MiniConsoleGameIcon(
                 game = game,
-                modifier = Modifier.size(width = 62.dp, height = 52.dp)
+                modifier = Modifier.size(width = 58.dp, height = 46.dp)
             )
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
+                verticalArrangement = Arrangement.Center
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -407,45 +428,56 @@ private fun GameCatalogCard(
                             text = game.code,
                             color = Color.White,
                             fontSize = 8.sp,
-                            fontWeight = FontWeight.Black
+                            lineHeight = 9.sp,
+                            fontWeight = FontWeight.Black,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
 
                     Text(
                         text = game.titleRu,
                         color = Color(0xFF5A5850),
-                        fontSize = 9.sp,
+                        fontSize = 8.sp,
+                        lineHeight = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
                 Text(
                     text = game.titleCz,
                     color = if (game.isAvailable) Color(0xFF1A1D1A) else Color(0xFF454744),
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
+                    lineHeight = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
 
                 Text(
                     text = game.subtitle,
                     color = Color(0xFF575A56),
-                    fontSize = 9.sp,
+                    fontSize = 8.sp,
+                    lineHeight = 9.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
+                    softWrap = false,
                     overflow = TextOverflow.Ellipsis
                 )
             }
         }
 
-        // Spodní tlačítko karty
+        // Spodní akční tlačítko karty
         if (game.isAvailable) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(28.dp)
+                    .height(25.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(
                         Brush.horizontalGradient(
@@ -457,29 +489,33 @@ private fun GameCatalogCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "▶  HRÁT HRU   (REKORD: ${ maxOf(highScoreA, highScoreB) })",
+                    text = "▶  HRÁT HRU   (REKORD: ${maxOf(highScoreA, highScoreB)})",
                     color = Color.White,
-                    fontSize = 10.sp,
+                    fontSize = 9.sp,
+                    lineHeight = 10.sp,
                     fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         } else {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(28.dp)
+                    .height(25.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(Color(0xFFB5B1A6))
                     .border(1.dp, Color(0xFF8C887E), RoundedCornerShape(6.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "🔒  PŘIPRAVUJEME",
-                    color = Color(0xFF484A47),
+                    text = "PŘIPRAVUJEME",
+                    color = Color(0xFF424441),
                     fontSize = 9.sp,
+                    lineHeight = 10.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 0.5.sp
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         }
@@ -551,7 +587,6 @@ private fun DrawScope.drawMiniWolfIcon(sx: Float, sy: Float, sw: Float, sh: Floa
     val ink = Color(0xFF1A1E17)
     val brown = Color(0xFF8C5828)
 
-    // Šikmé bidýlko a kutálející se vajíčko
     drawLine(
         color = brown,
         start = Offset(sx + sw * 0.08f, sy + sh * 0.35f),
@@ -571,7 +606,6 @@ private fun DrawScope.drawMiniWolfIcon(sx: Float, sy: Float, sw: Float, sh: Floa
         style = Stroke(width = sw * 0.035f)
     )
 
-    // Košík vlka
     val basket = Path().apply {
         moveTo(sx + sw * 0.32f, sy + sh * 0.62f)
         lineTo(sx + sw * 0.64f, sy + sh * 0.62f)
@@ -582,7 +616,6 @@ private fun DrawScope.drawMiniWolfIcon(sx: Float, sy: Float, sw: Float, sh: Floa
     drawPath(basket, color = brown)
     drawPath(basket, color = ink, style = Stroke(width = sw * 0.03f))
 
-    // Hlava vlka s čapkou a čumákem
     drawCircle(color = ink, radius = sw * 0.14f, center = Offset(sx + sw * 0.72f, sy + sh * 0.42f))
     drawOval(
         color = Color(0xFFF3F4EE),
@@ -596,7 +629,6 @@ private fun DrawScope.drawMiniWolfIcon(sx: Float, sy: Float, sw: Float, sh: Floa
         strokeWidth = sw * 0.08f,
         cap = StrokeCap.Round
     )
-    // Trup vlka
     drawLine(
         color = ink,
         start = Offset(sx + sw * 0.74f, sy + sh * 0.52f),
@@ -610,7 +642,6 @@ private fun DrawScope.drawMiniOctopusIcon(sx: Float, sy: Float, sw: Float, sh: F
     val ink = Color(0xFF1A1E17)
     val seaBlue = Color(0xFF28556B)
 
-    // Vlnky hladiny
     drawLine(
         color = seaBlue,
         start = Offset(sx + sw * 0.1f, sy + sh * 0.18f),
@@ -619,7 +650,6 @@ private fun DrawScope.drawMiniOctopusIcon(sx: Float, sy: Float, sw: Float, sh: F
         cap = StrokeCap.Round
     )
 
-    // Hlava chobotnice
     drawOval(
         color = ink,
         topLeft = Offset(sx + sw * 0.36f, sy + sh * 0.24f),
@@ -628,7 +658,6 @@ private fun DrawScope.drawMiniOctopusIcon(sx: Float, sy: Float, sw: Float, sh: F
     drawCircle(color = Color(0xFFBAC4AA), radius = sw * 0.035f, center = Offset(sx + sw * 0.47f, sy + sh * 0.38f))
     drawCircle(color = Color(0xFFBAC4AA), radius = sw * 0.035f, center = Offset(sx + sw * 0.59f, sy + sh * 0.38f))
 
-    // Chapadla chobotnice
     for (i in -2..2) {
         val tx = sx + sw * (0.52f + i * 0.12f)
         drawLine(
@@ -644,7 +673,6 @@ private fun DrawScope.drawMiniOctopusIcon(sx: Float, sy: Float, sw: Float, sh: F
 private fun DrawScope.drawMiniChefIcon(sx: Float, sy: Float, sw: Float, sh: Float) {
     val ink = Color(0xFF1A1E17)
 
-    // Vysoká bílá kuchařská čepice
     drawRoundRect(
         color = Color(0xFFF5F6F0),
         topLeft = Offset(sx + sw * 0.52f, sy + sh * 0.14f),
@@ -659,7 +687,6 @@ private fun DrawScope.drawMiniChefIcon(sx: Float, sy: Float, sw: Float, sh: Floa
         style = Stroke(width = sw * 0.035f)
     )
 
-    // Hlava a tělo kuchaře
     drawCircle(color = ink, radius = sw * 0.11f, center = Offset(sx + sw * 0.66f, sy + sh * 0.50f))
     drawRoundRect(
         color = ink,
@@ -668,7 +695,6 @@ private fun DrawScope.drawMiniChefIcon(sx: Float, sy: Float, sw: Float, sh: Floa
         cornerRadius = CornerRadius(4f, 4f)
     )
 
-    // Pánvička a letící jídlo
     drawLine(
         color = ink,
         start = Offset(sx + sw * 0.16f, sy + sh * 0.68f),
@@ -686,7 +712,6 @@ private fun DrawScope.drawMiniChefIcon(sx: Float, sy: Float, sw: Float, sh: Floa
 private fun DrawScope.drawMiniSpaceBridgeIcon(sx: Float, sy: Float, sw: Float, sh: Float) {
     val ink = Color(0xFF1A1E17)
 
-    // Kosmický transportér / most dole
     drawRoundRect(
         color = ink,
         topLeft = Offset(sx + sw * 0.22f, sy + sh * 0.64f),
@@ -696,7 +721,6 @@ private fun DrawScope.drawMiniSpaceBridgeIcon(sx: Float, sy: Float, sw: Float, s
     drawCircle(color = ink, radius = sw * 0.07f, center = Offset(sx + sw * 0.32f, sy + sh * 0.84f))
     drawCircle(color = ink, radius = sw * 0.07f, center = Offset(sx + sw * 0.68f, sy + sh * 0.84f))
 
-    // Kosmonaut ve skafandru nahoře
     drawCircle(color = ink, radius = sw * 0.11f, center = Offset(sx + sw * 0.50f, sy + sh * 0.28f))
     drawCircle(color = Color(0xFFF3F4EE), radius = sw * 0.06f, center = Offset(sx + sw * 0.50f, sy + sh * 0.28f))
     drawLine(
@@ -712,7 +736,6 @@ private fun DrawScope.drawMiniHockeyIcon(sx: Float, sy: Float, sw: Float, sh: Fl
     val ink = Color(0xFF1A1E17)
     val red = Color(0xFFA82820)
 
-    // Branková konstrukce
     val goal = Path().apply {
         moveTo(sx + sw * 0.16f, sy + sh * 0.82f)
         lineTo(sx + sw * 0.16f, sy + sh * 0.24f)
@@ -721,7 +744,6 @@ private fun DrawScope.drawMiniHockeyIcon(sx: Float, sy: Float, sw: Float, sh: Fl
     }
     drawPath(goal, color = red, style = Stroke(width = sw * 0.05f, join = StrokeJoin.Round))
 
-    // Brankář a hokejka
     drawCircle(color = ink, radius = sw * 0.11f, center = Offset(sx + sw * 0.52f, sy + sh * 0.42f))
     drawRoundRect(
         color = ink,
@@ -736,7 +758,6 @@ private fun DrawScope.drawMiniHockeyIcon(sx: Float, sy: Float, sw: Float, sh: Fl
     }
     drawPath(stick, color = ink, style = Stroke(width = sw * 0.055f, cap = StrokeCap.Round, join = StrokeJoin.Round))
 
-    // Letící puk
     drawCircle(color = ink, radius = sw * 0.06f, center = Offset(sx + sw * 0.26f, sy + sh * 0.44f))
 }
 
@@ -744,18 +765,15 @@ private fun DrawScope.drawMiniSlalomIcon(sx: Float, sy: Float, sw: Float, sh: Fl
     val ink = Color(0xFF1A1E17)
     val red = Color(0xFFA82820)
 
-    // Perspektivní okraje dráhy
     drawLine(red, Offset(sx + sw * 0.38f, sy + sh * 0.16f), Offset(sx + sw * 0.12f, sy + sh * 0.86f), sw * 0.04f)
     drawLine(red, Offset(sx + sw * 0.62f, sy + sh * 0.16f), Offset(sx + sw * 0.88f, sy + sh * 0.86f), sw * 0.04f)
 
-    // Závodní formule uprostřed
     drawRoundRect(
         color = ink,
         topLeft = Offset(sx + sw * 0.41f, sy + sh * 0.42f),
         size = Size(sw * 0.18f, sh * 0.38f),
         cornerRadius = CornerRadius(4f, 4f)
     )
-    // Přední a zadní kola formule
     drawLine(ink, Offset(sx + sw * 0.32f, sy + sh * 0.48f), Offset(sx + sw * 0.68f, sy + sh * 0.48f), sw * 0.07f, StrokeCap.Round)
     drawLine(ink, Offset(sx + sw * 0.30f, sy + sh * 0.72f), Offset(sx + sw * 0.70f, sy + sh * 0.72f), sw * 0.08f, StrokeCap.Round)
 }
