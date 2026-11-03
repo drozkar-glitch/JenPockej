@@ -4,13 +4,25 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Pozadi: Svetly kovovy kryt konzole s jemnym stinovanim -->
     <path
-        android:fillColor="#8C1D1D"
-        android:pathData="M0,0h108v108h-108z" />
+        android:fillColor="#FFE4E1D7"
+        android:pathData="M16,0 h76 a16,16 0 0 1 16,16 v76 a16,16 0 0 1 -16,16 h-76 a16,16 0 0 1 -16,-16 v-76 a16,16 0 0 1 16,-16 z" />
+    
+    <!-- Prolisovany a stinovany vnitrni kryt -->
     <path
-        android:fillColor="#D6D8DC"
-        android:pathData="M10,14h88v80h-88z" />
+        android:fillColor="#FFD3CFC4"
+        android:pathData="M16,4 h76 a12,12 0 0 1 12,12 v76 a12,12 0 0 1 -12,12 h-76 a12,12 0 0 1 -12,-12 v-76 a12,12 0 0 1 12,-12 z" />
+
+    <!-- Krasna obvodova cervena linka -->
     <path
-        android:fillColor="#9BA889"
-        android:pathData="M18,22h72v64h-72z" />
+        android:strokeColor="#FFB52B24"
+        android:strokeWidth="1.8"
+        android:pathData="M18,18 h72 a6,6 0 0 1 6,6 v60 a6,6 0 0 1 -6,6 h-72 a6,6 0 0 1 -6,-6 v-60 a6,6 0 0 1 6,-6 z" />
+
+    <!-- Vnejsi cerny dekorativni radek kolem displeje (prerusovany nahore a dole) -->
+    <path
+        android:strokeColor="#FF232724"
+        android:strokeWidth="1"
+        android:pathData="M32,14 H22 A8,8 0 0 0 14,22 V86 A8,8 0 0 0 22,94 H32 M76,14 H86 A8,8 0 0 1 94,22 V86 A8,8 0 0 1 86,94 H76" />
 </vector>
