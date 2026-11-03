@@ -50,6 +50,7 @@ fun App() {
     val soundPlayer = remember { SoundPlayer() }
     val engine = remember { GameEngine(media = soundPlayer) }
     var uiState by remember { mutableStateOf(engine.state) }
+    var activeGame by remember { mutableStateOf<ClassicGameId?>(null) }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -57,8 +58,8 @@ fun App() {
         }
     }
 
-    LaunchedEffect(Unit) {
-        while (true) {
+    LaunchedEffect(activeGame) {
+        while (activeGame != null) {
             delay(engine.currentTickDelayMs())
             engine.stepTick()
             uiState = engine.state
@@ -66,41 +67,117 @@ fun App() {
     }
 
     MaterialTheme {
-        val outerPlasticColor = Color(0xFFB7B2A6)
-        val metalPlateBrush = Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFE2DFD7),
-                Color(0xFFD6D3C9),
-                Color(0xFFCBC7BD)
+        if (activeGame == null) {
+            GameHubScreen(
+                highScoreA = uiState.highScoreA,
+                highScoreB = uiState.highScoreB,
+                soundEnabled = uiState.soundEnabled,
+                hapticsEnabled = uiState.hapticsEnabled,
+                onToggleSound = {
+                    engine.toggleSound()
+                    uiState = engine.state
+                },
+                onToggleHaptics = {
+                    engine.toggleHaptics()
+                    uiState = engine.state
+                },
+                onSelectGame = { chosen ->
+                    if (chosen == ClassicGameId.JEN_POCKEJ) {
+                        engine.resetToDemo()
+                        uiState = engine.state
+                        activeGame = chosen
+                    }
+                }
             )
-        )
+        } else {
+            JenPockejConsoleBody(
+                uiState = uiState,
+                onBackToHub = {
+                    engine.resetToDemo()
+                    uiState = engine.state
+                    activeGame = null
+                },
+                onMoveWolf = { target ->
+                    engine.moveWolf(target)
+                    uiState = engine.state
+                },
+                onStartA = {
+                    engine.startNewGame(GameMode.GAME_A)
+                    uiState = engine.state
+                },
+                onStartB = {
+                    engine.startNewGame(GameMode.GAME_B)
+                    uiState = engine.state
+                },
+                onResetDemo = {
+                    engine.resetToDemo()
+                    uiState = engine.state
+                },
+                onToggleSound = {
+                    engine.toggleSound()
+                    uiState = engine.state
+                },
+                onToggleHaptics = {
+                    engine.toggleHaptics()
+                    uiState = engine.state
+                }
+            )
+        }
+    }
+}
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(outerPlasticColor)
-                .padding(6.dp)
-                .background(metalPlateBrush, RoundedCornerShape(10.dp))
-                .border(2.dp, Color(0xFF969185), RoundedCornerShape(10.dp))
-                .padding(horizontal = 12.dp, vertical = 4.dp)
+@Composable
+private fun JenPockejConsoleBody(
+    uiState: GameSnapshot,
+    onBackToHub: () -> Unit,
+    onMoveWolf: (BasketPosition) -> Unit,
+    onStartA: () -> Unit,
+    onStartB: () -> Unit,
+    onResetDemo: () -> Unit,
+    onToggleSound: () -> Unit,
+    onToggleHaptics: () -> Unit
+) {
+    val outerPlasticColor = Color(0xFFB7B2A6)
+    val metalPlateBrush = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFE2DFD7),
+            Color(0xFFD6D3C9),
+            Color(0xFFCBC7BD)
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(outerPlasticColor)
+            .padding(6.dp)
+            .background(metalPlateBrush, RoundedCornerShape(10.dp))
+            .border(2.dp, Color(0xFF969185), RoundedCornerShape(10.dp))
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            // LEVY PANEL: Klikaci kulate logo •ИМ (navrat do vyberu her) + 2 cervena tlacitka dole
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(102.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // LEVY PANEL: Kulate logo •ИМ nahore + 2 cervena tlacitka se sipkami dole
                 Column(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(102.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier
+                        .padding(top = 2.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onBackToHub)
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
                 ) {
                     Box(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .size(56.dp),
+                        modifier = Modifier.size(52.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -119,294 +196,270 @@ fun App() {
                         Text(
                             text = "ИМ",
                             color = Color(0xFF232724),
-                            fontSize = 20.sp,
+                            fontSize = 19.sp,
                             fontWeight = FontWeight.Black,
                             fontStyle = FontStyle.Italic,
                             modifier = Modifier.padding(start = 6.dp)
                         )
                     }
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    ) {
-                        ConsoleCornerButton(
-                            isLeft = true,
-                            isTop = true,
-                            isActive = uiState.wolfPosition == BasketPosition.TOP_LEFT,
-                            onClick = {
-                                engine.moveWolf(BasketPosition.TOP_LEFT)
-                                uiState = engine.state
-                            }
-                        )
-                        ConsoleCornerButton(
-                            isLeft = true,
-                            isTop = false,
-                            isActive = uiState.wolfPosition == BasketPosition.BOTTOM_LEFT,
-                            onClick = {
-                                engine.moveWolf(BasketPosition.BOTTOM_LEFT)
-                                uiState = engine.state
-                            }
-                        )
-                    }
+                    Text(
+                        text = "◀ VÝBĚR HER",
+                        color = Color(0xFF8C1D1D),
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
                 }
 
-                // STREDNI PANEL: Cista prerusovana cerna linka v ose napisu + zapusteny LCD
                 Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                ) {
+                    ConsoleCornerButton(
+                        isLeft = true,
+                        isTop = true,
+                        isActive = uiState.wolfPosition == BasketPosition.TOP_LEFT,
+                        onClick = { onMoveWolf(BasketPosition.TOP_LEFT) }
+                    )
+                    ConsoleCornerButton(
+                        isLeft = true,
+                        isTop = false,
+                        isActive = uiState.wolfPosition == BasketPosition.BOTTOM_LEFT,
+                        onClick = { onMoveWolf(BasketPosition.BOTTOM_LEFT) }
+                    )
+                }
+            }
+
+            // STREDNI PANEL: Cista prerusovana cerna linka v ose napisu + zapusteny LCD
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(horizontal = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                val topHeaderH = 22.dp
+                val botFooterH = 20.dp
+
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight()
-                        .padding(horizontal = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+                        .fillMaxWidth()
+                        .drawBehind {
+                            val topY = (topHeaderH / 2).toPx()
+                            val botY = size.height - (botFooterH / 2).toPx()
+                            val r = 14.dp.toPx()
+                            val d = r * 2f
+                            val left = 2.dp.toPx()
+                            val right = size.width - 2.dp.toPx()
+
+                            val topGapHalf = 86.dp.toPx()
+                            val botGapHalf = 108.dp.toPx()
+                            val cx = size.width * 0.5f
+
+                            val leftBracket = Path().apply {
+                                moveTo(cx - topGapHalf, topY)
+                                lineTo(left + r, topY)
+                                arcTo(Rect(left, topY, left + d, topY + d), 270f, -90f, false)
+                                lineTo(left, botY - r)
+                                arcTo(Rect(left, botY - d, left + d, botY), 180f, -90f, false)
+                                lineTo(cx - botGapHalf, botY)
+                            }
+
+                            val rightBracket = Path().apply {
+                                moveTo(cx + topGapHalf, topY)
+                                lineTo(right - r, topY)
+                                arcTo(Rect(right - d, topY, right, topY + d), 270f, 90f, false)
+                                lineTo(right, botY - r)
+                                arcTo(Rect(right - d, botY - d, right, botY), 0f, 90f, false)
+                                lineTo(cx + botGapHalf, botY)
+                            }
+
+                            val frameStroke = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
+                            drawPath(leftBracket, color = Color(0xFF232724), style = frameStroke)
+                            drawPath(rightBracket, color = Color(0xFF232724), style = frameStroke)
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    val topHeaderH = 22.dp
-                    val botFooterH = 20.dp
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                start = 10.dp,
+                                end = 10.dp,
+                                top = topHeaderH,
+                                bottom = botFooterH
+                            )
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF8B8880),
+                                        Color(0xFFB8B5AC),
+                                        Color(0xFF9C9990)
+                                    )
+                                ),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .border(2.dp, Color(0xFF6B6962), RoundedCornerShape(8.dp))
+                            .padding(5.dp)
+                    ) {
+                        JenPockejLcdScreen(
+                            snapshot = uiState,
+                            onCornerTap = onMoveWolf,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(4.dp))
+                                .border(1.5.dp, Color(0xFF4A4E46), RoundedCornerShape(4.dp))
+                        )
+                    }
 
                     Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .drawBehind {
-                                val topY = (topHeaderH / 2).toPx()
-                                val botY = size.height - (botFooterH / 2).toPx()
-                                val r = 14.dp.toPx()
-                                val d = r * 2f
-                                val left = 2.dp.toPx()
-                                val right = size.width - 2.dp.toPx()
-
-                                val topGapHalf = 86.dp.toPx()
-                                val botGapHalf = 108.dp.toPx()
-                                val cx = size.width * 0.5f
-
-                                val leftBracket = Path().apply {
-                                    moveTo(cx - topGapHalf, topY)
-                                    lineTo(left + r, topY)
-                                    arcTo(Rect(left, topY, left + d, topY + d), 270f, -90f, false)
-                                    lineTo(left, botY - r)
-                                    arcTo(Rect(left, botY - d, left + d, botY), 180f, -90f, false)
-                                    lineTo(cx - botGapHalf, botY)
-                                }
-
-                                val rightBracket = Path().apply {
-                                    moveTo(cx + topGapHalf, topY)
-                                    lineTo(right - r, topY)
-                                    arcTo(Rect(right - d, topY, right, topY + d), 270f, 90f, false)
-                                    lineTo(right, botY - r)
-                                    arcTo(Rect(right - d, botY - d, right, botY), 0f, 90f, false)
-                                    lineTo(cx + botGapHalf, botY)
-                                }
-
-                                val frameStroke = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
-                                drawPath(leftBracket, color = Color(0xFF232724), style = frameStroke)
-                                drawPath(rightBracket, color = Color(0xFF232724), style = frameStroke)
-                            },
+                            .height(topHeaderH)
+                            .align(Alignment.TopCenter),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(
-                                    start = 10.dp,
-                                    end = 10.dp,
-                                    top = topHeaderH,
-                                    bottom = botFooterH
-                                )
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(
-                                            Color(0xFF8B8880),
-                                            Color(0xFFB8B5AC),
-                                            Color(0xFF9C9990)
-                                        )
-                                    ),
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .border(2.dp, Color(0xFF6B6962), RoundedCornerShape(8.dp))
-                                .padding(5.dp)
-                        ) {
-                            JenPockejLcdScreen(
-                                snapshot = uiState,
-                                onCornerTap = { target ->
-                                    engine.moveWolf(target)
-                                    uiState = engine.state
-                                },
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .border(1.5.dp, Color(0xFF4A4E46), RoundedCornerShape(4.dp))
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .height(topHeaderH)
-                                .align(Alignment.TopCenter),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "НУ , ПОГОДИ !",
-                                color = Color(0xFFB52B24),
-                                fontSize = 14.sp,
-                                lineHeight = 14.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.4.sp
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .height(botFooterH)
-                                .align(Alignment.BottomCenter),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "ЭЛЕКТРОНИКА ИМ 02",
-                                color = Color(0xFF232724),
-                                fontSize = 12.sp,
-                                lineHeight = 12.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.2.sp
-                            )
-                        }
+                        Text(
+                            text = "НУ , ПОГОДИ !",
+                            color = Color(0xFFB52B24),
+                            fontSize = 14.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.4.sp
+                        )
                     }
 
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .height(botFooterH)
+                            .align(Alignment.BottomCenter),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "REKORD A: ${uiState.highScoreA}  |  REKORD B: ${uiState.highScoreB}",
-                            color = Color(0xFF3A3D3A),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "© 2026 Created by Pavel Mareš",
-                            color = Color(0xFF3A3D3A),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
+                            text = "ЭЛЕКТРОНИКА ИМ 02",
+                            color = Color(0xFF232724),
+                            fontSize = 12.sp,
+                            lineHeight = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.2.sp
                         )
                     }
                 }
 
-                // PRAVY PANEL: 3 ovalna tlacitka (игра А, игра Б, время) + 2 mala tlacitka + 2 cervena tlacitka dole
-                Column(
+                Row(
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .width(108.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.Top
+                    Text(
+                        text = "REKORD A: ${uiState.highScoreA}  |  REKORD B: ${uiState.highScoreB}",
+                        color = Color(0xFF3A3D3A),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "© 2026 Created by Pavel Mareš",
+                        color = Color(0xFF3A3D3A),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // PRAVY PANEL: 3 ovalna tlacitka (игра А, игра Б, время) + 2 mala tlacitka + 2 cervena tlacitka dole
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(108.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(3.dp)
-                        ) {
-                            SilverOvalMenuButton(
-                                label = "игра А",
-                                isSelected = uiState.isRunning && uiState.mode == GameMode.GAME_A,
-                                onClick = {
-                                    engine.startNewGame(GameMode.GAME_A)
-                                    uiState = engine.state
-                                }
-                            )
-                            SilverOvalMenuButton(
-                                label = "игра Б",
-                                isSelected = uiState.isRunning && uiState.mode == GameMode.GAME_B,
-                                onClick = {
-                                    engine.startNewGame(GameMode.GAME_B)
-                                    uiState = engine.state
-                                }
-                            )
-                            SilverOvalMenuButton(
-                                label = "время",
-                                isSelected = !uiState.isRunning,
-                                onClick = {
-                                    engine.resetToDemo()
-                                    uiState = engine.state
-                                }
-                            )
-                        }
-
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.padding(top = 2.dp)
-                        ) {
-                            Canvas(modifier = Modifier.size(16.dp)) {
-                                val p = Path().apply {
-                                    moveTo(size.width * 0.55f, size.height * 0.12f)
-                                    lineTo(size.width * 0.15f, size.height * 0.76f)
-                                    lineTo(size.width * 0.85f, size.height * 0.76f)
-                                    close()
-                                }
-                                drawPath(
-                                    path = p,
-                                    color = Color(0xFF232724),
-                                    style = Stroke(width = 2f)
-                                )
-                                drawCircle(
-                                    color = Color(0xFF232724),
-                                    radius = 2.2f,
-                                    center = Offset(size.width * 0.5f, size.height * 0.88f)
-                                )
-                            }
-
-                            SmallRecessedBlackButton(
-                                label = if (uiState.soundEnabled) "ZVUK" else "TICH",
-                                enabled = uiState.soundEnabled,
-                                onClick = {
-                                    engine.toggleSound()
-                                    uiState = engine.state
-                                }
-                            )
-
-                            SmallRecessedBlackButton(
-                                label = if (uiState.hapticsEnabled) "VIBR" else "BEZ",
-                                enabled = uiState.hapticsEnabled,
-                                onClick = {
-                                    engine.toggleHaptics()
-                                    uiState = engine.state
-                                }
-                            )
-                        }
+                        SilverOvalMenuButton(
+                            label = "игра А",
+                            isSelected = uiState.isRunning && uiState.mode == GameMode.GAME_A,
+                            onClick = onStartA
+                        )
+                        SilverOvalMenuButton(
+                            label = "игра Б",
+                            isSelected = uiState.isRunning && uiState.mode == GameMode.GAME_B,
+                            onClick = onStartB
+                        )
+                        SilverOvalMenuButton(
+                            label = "время",
+                            isSelected = !uiState.isRunning,
+                            onClick = onResetDemo
+                        )
                     }
 
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(top = 2.dp)
                     ) {
-                        ConsoleCornerButton(
-                            isLeft = false,
-                            isTop = true,
-                            isActive = uiState.wolfPosition == BasketPosition.TOP_RIGHT,
-                            onClick = {
-                                engine.moveWolf(BasketPosition.TOP_RIGHT)
-                                uiState = engine.state
+                        Canvas(modifier = Modifier.size(16.dp)) {
+                            val p = Path().apply {
+                                moveTo(size.width * 0.55f, size.height * 0.12f)
+                                lineTo(size.width * 0.15f, size.height * 0.76f)
+                                lineTo(size.width * 0.85f, size.height * 0.76f)
+                                close()
                             }
+                            drawPath(
+                                path = p,
+                                color = Color(0xFF232724),
+                                style = Stroke(width = 2f)
+                            )
+                            drawCircle(
+                                color = Color(0xFF232724),
+                                radius = 2.2f,
+                                center = Offset(size.width * 0.5f, size.height * 0.88f)
+                            )
+                        }
+
+                        SmallRecessedBlackButton(
+                            label = if (uiState.soundEnabled) "ZVUK" else "TICH",
+                            enabled = uiState.soundEnabled,
+                            onClick = onToggleSound
                         )
-                        ConsoleCornerButton(
-                            isLeft = false,
-                            isTop = false,
-                            isActive = uiState.wolfPosition == BasketPosition.BOTTOM_RIGHT,
-                            onClick = {
-                                engine.moveWolf(BasketPosition.BOTTOM_RIGHT)
-                                uiState = engine.state
-                            }
+
+                        SmallRecessedBlackButton(
+                            label = if (uiState.hapticsEnabled) "VIBR" else "BEZ",
+                            enabled = uiState.hapticsEnabled,
+                            onClick = onToggleHaptics
                         )
                     }
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                ) {
+                    ConsoleCornerButton(
+                        isLeft = false,
+                        isTop = true,
+                        isActive = uiState.wolfPosition == BasketPosition.TOP_RIGHT,
+                        onClick = { onMoveWolf(BasketPosition.TOP_RIGHT) }
+                    )
+                    ConsoleCornerButton(
+                        isLeft = false,
+                        isTop = false,
+                        isActive = uiState.wolfPosition == BasketPosition.BOTTOM_RIGHT,
+                        onClick = { onMoveWolf(BasketPosition.BOTTOM_RIGHT) }
+                    )
                 }
             }
         }
@@ -491,7 +544,6 @@ private fun ConsoleCornerButton(
             Spacer(modifier = Modifier.width(4.dp))
         }
 
-        // Kovova obroucka a 3D cervene tlacitko podle ikony
         val ringColor = if (isActive) Color(0xFFFFD166) else Color(0xFF5E5B54)
         Box(
             modifier = Modifier
