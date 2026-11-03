@@ -30,8 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -40,7 +41,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -69,13 +69,12 @@ fun App() {
         val outerPlasticColor = Color(0xFFB7B2A6)
         val metalPlateBrush = Brush.verticalGradient(
             colors = listOf(
-                Color(0xFFE0DDD4),
-                Color(0xFFD5D2C8),
-                Color(0xFFCAC6BC)
+                Color(0xFFE2DFD7),
+                Color(0xFFD6D3C9),
+                Color(0xFFCBC7BD)
             )
         )
 
-        // Vnejsi plastovy korpus konzole roztazeny na 100 % obrazovky
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -83,14 +82,14 @@ fun App() {
                 .padding(6.dp)
                 .background(metalPlateBrush, RoundedCornerShape(10.dp))
                 .border(2.dp, Color(0xFF969185), RoundedCornerShape(10.dp))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .padding(horizontal = 12.dp, vertical = 5.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // LEVY PANEL: Logo ИМ nahore + 2 tmava tlacitka se sipkami dole
+                // LEVY PANEL: Kulate logo •ИМ nahore + 2 tmava tlacitka se sipkami dole
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -98,7 +97,6 @@ fun App() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Kulate logo •ИМ
                     Box(
                         modifier = Modifier
                             .padding(top = 4.dp)
@@ -128,7 +126,6 @@ fun App() {
                         )
                     }
 
-                    // Leva herni tlacitka (Horni levy + Dolni levy)
                     Column(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -155,7 +152,7 @@ fun App() {
                     }
                 }
 
-                // STREDNI PANEL: Cerna obruba s napisy НУ, ПОГОДИ! a ЭЛЕКТРОНИКА ИМ 02 + zapusteny LCD
+                // STREDNI PANEL: Prerusovana cerna obruba bez obdelnikovych nalepek + zapusteny LCD
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -164,33 +161,66 @@ fun App() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Stredni ramecek s černou linkou a zapustenym displejem
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .padding(top = 2.dp),
+                            .padding(top = 1.dp)
+                            .drawBehind {
+                                val padY = 9.dp.toPx()
+                                val r = 14.dp.toPx()
+                                val d = r * 2f
+                                val left = 2.dp.toPx()
+                                val right = size.width - 2.dp.toPx()
+                                val top = padY
+                                val bottom = size.height - padY
+
+                                val topGapHalf = 92.dp.toPx()
+                                val botGapHalf = 114.dp.toPx()
+                                val cx = size.width * 0.5f
+
+                                // Leva polovina cerneho ramecku (od horniho napisu po spodni napis)
+                                val leftBracket = Path().apply {
+                                    moveTo(cx - topGapHalf, top)
+                                    lineTo(left + r, top)
+                                    arcTo(Rect(left, top, left + d, top + d), 270f, -90f, false)
+                                    lineTo(left, bottom - r)
+                                    arcTo(Rect(left, bottom - d, left + d, bottom), 180f, -90f, false)
+                                    lineTo(cx - botGapHalf, bottom)
+                                }
+
+                                // Prava polovina cerneho ramecku (od horniho napisu po spodni napis)
+                                val rightBracket = Path().apply {
+                                    moveTo(cx + topGapHalf, top)
+                                    lineTo(right - r, top)
+                                    arcTo(Rect(right - d, top, right, top + d), 270f, 90f, false)
+                                    lineTo(right, bottom - r)
+                                    arcTo(Rect(right - d, bottom - d, right, bottom), 0f, 90f, false)
+                                    lineTo(cx + botGapHalf, bottom)
+                                }
+
+                                val frameStroke = Stroke(width = 2.6.dp.toPx(), cap = StrokeCap.Round)
+                                drawPath(leftBracket, color = Color(0xFF232724), style = frameStroke)
+                                drawPath(rightBracket, color = Color(0xFF232724), style = frameStroke)
+                            },
                         contentAlignment = Alignment.Center
                     ) {
-                        // Cerna obvodova linka kolem displeje
+                        // Zapusteny kovovy prolis kolem LCD sklicka
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(vertical = 8.dp)
-                                .border(2.5.dp, Color(0xFF252825), RoundedCornerShape(14.dp))
-                                .padding(8.dp)
-                                // Zapusteny kovovy prolis kolem sklicka
+                                .padding(horizontal = 10.dp, vertical = 17.dp)
                                 .background(
                                     Brush.verticalGradient(
                                         listOf(
-                                            Color(0xFF8E8C84),
+                                            Color(0xFF8B8880),
                                             Color(0xFFB8B5AC),
-                                            Color(0xFF9E9B92)
+                                            Color(0xFF9C9990)
                                         )
                                     ),
                                     RoundedCornerShape(8.dp)
                                 )
-                                .border(2.dp, Color(0xFF6E6C65), RoundedCornerShape(8.dp))
+                                .border(2.dp, Color(0xFF6B6962), RoundedCornerShape(8.dp))
                                 .padding(6.dp)
                         ) {
                             JenPockejLcdScreen(
@@ -206,44 +236,31 @@ fun App() {
                             )
                         }
 
-                        // Horni cerveny napis НУ, ПОГОДИ! prerusujici cernou linku
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .background(Color(0xFFDDDAD1))
-                                .padding(horizontal = 14.dp)
-                        ) {
-                            Text(
-                                text = "НУ , ПОГОДИ !",
-                                color = Color(0xFFB52B24),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.5.sp
-                            )
-                        }
+                        // Horni cerveny napis НУ, ПОГОДИ! primo na kovovem podkladu
+                        Text(
+                            text = "НУ , ПОГОДИ !",
+                            color = Color(0xFFB52B24),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.5.sp,
+                            modifier = Modifier.align(Alignment.TopCenter)
+                        )
 
-                        // Spodni napis ЭЛЕКТРОНИКА ИМ 02 prerusujici cernou linku
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .background(Color(0xFFCDC9BF))
-                                .padding(horizontal = 14.dp)
-                        ) {
-                            Text(
-                                text = "ЭЛЕКТРОНИКА ИМ 02",
-                                color = Color(0xFF232724),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.2.sp
-                            )
-                        }
+                        // Spodni napis ЭЛЕКТРОНИКА ИМ 02 primo na kovovem podkladu
+                        Text(
+                            text = "ЭЛЕКТРОНИКА ИМ 02",
+                            color = Color(0xFF232724),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.2.sp,
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        )
                     }
 
-                    // Spodni diskretni radek s rekordy a copyrightem
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 1.dp),
+                            .padding(horizontal = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -270,7 +287,6 @@ fun App() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Horni sekce s ovalnymi tlacitky a zvoneckem
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -278,7 +294,6 @@ fun App() {
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.Top
                     ) {
-                        // Sloupec 3 stribrnych ovalnych tlacitek
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(3.dp)
@@ -309,18 +324,16 @@ fun App() {
                             )
                         }
 
-                        // Sloupec se symbolem zvonecku a 2 malymi cernymi tlacitky (Zvuk a Vibrace)
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.padding(top = 2.dp)
                         ) {
-                            // Ikona zvonecku
                             Canvas(modifier = Modifier.size(16.dp)) {
                                 val p = Path().apply {
-                                    moveTo(size.width * 0.5f, size.height * 0.1f)
-                                    lineTo(size.width * 0.15f, size.height * 0.78f)
-                                    lineTo(size.width * 0.85f, size.height * 0.78f)
+                                    moveTo(size.width * 0.55f, size.height * 0.12f)
+                                    lineTo(size.width * 0.15f, size.height * 0.76f)
+                                    lineTo(size.width * 0.85f, size.height * 0.76f)
                                     close()
                                 }
                                 drawPath(
@@ -355,7 +368,6 @@ fun App() {
                         }
                     }
 
-                    // Prava herni tlacitka (Horni pravy + Dolni pravy)
                     Column(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -464,7 +476,6 @@ private fun ConsoleCornerButton(
             Spacer(modifier = Modifier.width(4.dp))
         }
 
-        // Kulate tmave tlacitko ve stribrnem pouzdre
         val ringColor = if (isActive) Color(0xFFB52B24) else Color(0xFF6E6C64)
         Box(
             modifier = Modifier
