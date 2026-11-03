@@ -89,7 +89,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // LEVY PANEL: Kulate logo •ИМ nahore + 2 tmava tlacitka se sipkami dole
+                // LEVY PANEL: Kulate logo •ИМ nahore + 2 cervena tlacitka se sipkami dole
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -204,7 +204,6 @@ fun App() {
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        // Zapusteny kovovy prolis s cistym odstupem od horniho i spodniho napisu
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -240,7 +239,6 @@ fun App() {
                             )
                         }
 
-                        // Horni napis НУ, ПОГОДИ! vycentrovany presne do osy horni cerne linky
                         Box(
                             modifier = Modifier
                                 .height(topHeaderH)
@@ -257,7 +255,6 @@ fun App() {
                             )
                         }
 
-                        // Spodni napis ЭЛЕКТРОНИКА ИМ 02 vycentrovany presne do osy spodni cerne linky
                         Box(
                             modifier = Modifier
                                 .height(botFooterH)
@@ -297,7 +294,7 @@ fun App() {
                     }
                 }
 
-                // PRAVY PANEL: 3 ovalna tlacitka (игра А, игра Б, время) + 2 mala tlacitka + 2 herni tlacitka dole
+                // PRAVY PANEL: 3 ovalna tlacitka (игра А, игра Б, время) + 2 mala tlacitka + 2 cervena tlacitka dole
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -494,30 +491,31 @@ private fun ConsoleCornerButton(
             Spacer(modifier = Modifier.width(4.dp))
         }
 
-        val ringColor = if (isActive) Color(0xFFB52B24) else Color(0xFF6E6C64)
+        // Kovova obroucka a 3D cervene tlacitko podle ikony
+        val ringColor = if (isActive) Color(0xFFFFD166) else Color(0xFF5E5B54)
         Box(
             modifier = Modifier
                 .size(54.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
-                        listOf(Color(0xFFB8B5AC), Color(0xFF7A776E))
+                        listOf(Color(0xFFB8B5AC), Color(0xFF706D65))
                     )
                 )
                 .border(2.dp, ringColor, CircleShape)
                 .clickable(onClick = onClick)
-                .padding(6.dp)
+                .padding(5.5.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
                         colors = if (isActive) {
-                            listOf(Color(0xFF5A5D58), Color(0xFF222522))
+                            listOf(Color(0xFFFF5A4F), Color(0xFFD62828), Color(0xFF8F1515))
                         } else {
-                            listOf(Color(0xFF484B47), Color(0xFF1B1D1B))
+                            listOf(Color(0xFFE63930), Color(0xFFB8201A), Color(0xFF7A110E))
                         }
                     )
                 )
-                .border(1.dp, Color(0xFF141614), CircleShape)
+                .border(1.2.dp, Color(0xFF520B09), CircleShape)
         )
 
         if (!isLeft) {

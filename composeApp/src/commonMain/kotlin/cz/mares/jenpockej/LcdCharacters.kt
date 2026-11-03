@@ -330,52 +330,80 @@ internal fun DrawScope.drawHareInWindow(
     val ink = if (visible) LcdInkOn else LcdInkGhost
     val hx = 226f
     val hy = 96f
+    val outline = Stroke(width = vp.s(3.5f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-    // Dlouhe usi zajicka
-    val ears = Path().apply {
-        moveTo(vp.x(hx - 6f), vp.y(hy - 18f))
-        cubicTo(vp.x(hx - 28f), vp.y(hy - 56f), vp.x(hx - 14f), vp.y(hy - 66f), vp.x(hx - 2f), vp.y(hy - 40f))
-        cubicTo(vp.x(hx - 6f), vp.y(hy - 64f), vp.x(hx + 12f), vp.y(hy - 62f), vp.x(hx + 8f), vp.y(hy - 20f))
-        close()
-    }
-    drawPath(ears, color = ink)
-    drawLine(LcdBgColor, vp.pt(hx - 12f, hy - 48f), vp.pt(hx - 5f, hy - 26f), vp.s(2.2f))
-
-    // Hlava s tvickami a ocima
-    drawOval(
-        color = ink,
-        topLeft = vp.pt(hx - 20f, hy - 22f),
-        size = Size(vp.x(44f), vp.y(36f)),
-        style = Stroke(width = vp.s(3.8f))
-    )
-    drawOval(ink, vp.pt(hx - 2f, hy - 14f), Size(vp.x(6f), vp.y(10f)))
-    drawOval(ink, vp.pt(hx + 8f, hy - 14f), Size(vp.x(6f), vp.y(10f)))
-    drawCircle(ink, radius = vp.s(3.2f), center = vp.pt(hx + 18f, hy - 3f))
-    drawLine(ink, vp.pt(hx + 16f, hy - 2f), vp.pt(hx + 32f, hy - 8f), vp.s(2f))
-    drawLine(ink, vp.pt(hx + 16f, hy + 1f), vp.pt(hx + 33f, hy + 1f), vp.s(2f))
-
-    // Trup zajicka
+    // 1. Trup zajicka v tmavem triku vyklanejici se z okna
     val body = Path().apply {
-        moveTo(vp.x(hx - 40f), vp.y(hy + 12f))
-        lineTo(vp.x(hx - 8f), vp.y(hy + 8f))
-        lineTo(vp.x(hx + 6f), vp.y(hy + 32f))
-        lineTo(vp.x(hx - 36f), vp.y(hy + 36f))
+        moveTo(vp.x(hx - 42f), vp.y(hy + 10f))
+        lineTo(vp.x(hx - 6f), vp.y(hy + 6f))
+        lineTo(vp.x(hx + 8f), vp.y(hy + 32f))
+        lineTo(vp.x(hx - 38f), vp.y(hy + 36f))
         close()
     }
     drawPath(body, color = ink)
 
-    drawOval(
+    // 2. Dlouhe usi se svetlym vnitrekem (komiksova kresba)
+    val leftEar = Path().apply {
+        moveTo(vp.x(hx - 8f), vp.y(hy - 18f))
+        cubicTo(vp.x(hx - 30f), vp.y(hy - 56f), vp.x(hx - 14f), vp.y(hy - 66f), vp.x(hx - 2f), vp.y(hy - 38f))
+        close()
+    }
+    val rightEar = Path().apply {
+        moveTo(vp.x(hx - 2f), vp.y(hy - 18f))
+        cubicTo(vp.x(hx - 6f), vp.y(hy - 62f), vp.x(hx + 14f), vp.y(hy - 62f), vp.x(hx + 8f), vp.y(hy - 18f))
+        close()
+    }
+    drawPath(leftEar, color = LcdBgColor)
+    drawPath(leftEar, color = ink, style = outline)
+    drawPath(rightEar, color = LcdBgColor)
+    drawPath(rightEar, color = ink, style = outline)
+
+    // 3. Svetla hlava zajicka s baculatou tvickama a cernym obrysem (zadna cerna koule)
+    val headPath = Path().apply {
+        moveTo(vp.x(hx - 18f), vp.y(hy - 6f))
+        cubicTo(vp.x(hx - 22f), vp.y(hy - 24f), vp.x(hx + 14f), vp.y(hy - 26f), vp.x(hx + 20f), vp.y(hy - 8f))
+        cubicTo(vp.x(hx + 28f), vp.y(hy - 2f), vp.x(hx + 26f), vp.y(hy + 14f), vp.x(hx + 6f), vp.y(hy + 14f))
+        cubicTo(vp.x(hx - 12f), vp.y(hy + 14f), vp.x(hx - 20f), vp.y(hy + 6f), vp.x(hx - 18f), vp.y(hy - 6f))
+        close()
+    }
+    drawPath(headPath, color = LcdBgColor)
+    drawPath(headPath, color = ink, style = outline)
+
+    // Oci, cumacek, usmev a fousky zajicka
+    drawOval(ink, vp.pt(hx - 2f, hy - 15f), Size(vp.x(5.5f), vp.y(9.5f)))
+    drawOval(ink, vp.pt(hx + 8f, hy - 15f), Size(vp.x(5.5f), vp.y(9.5f)))
+    drawCircle(ink, radius = vp.s(3.2f), center = vp.pt(hx + 21f, hy - 3f))
+    drawLine(ink, vp.pt(hx + 18f, hy - 2f), vp.pt(hx + 34f, hy - 8f), vp.s(2.0f), StrokeCap.Round)
+    drawLine(ink, vp.pt(hx + 18f, hy + 1f), vp.pt(hx + 35f, hy + 1f), vp.s(2.0f), StrokeCap.Round)
+    drawArc(
         color = ink,
-        topLeft = vp.pt(hx - 8f, hy + 30f),
-        size = Size(vp.x(28f), vp.y(12f)),
-        style = Stroke(width = vp.s(3.5f))
+        startAngle = 10f,
+        sweepAngle = 140f,
+        useCenter = false,
+        topLeft = vp.pt(hx + 4f, hy + 1f),
+        size = Size(vp.x(12f), vp.y(7f)),
+        style = Stroke(width = vp.s(2.4f), cap = StrokeCap.Round)
     )
 
+    // Spodni packa oprena o parapet
+    drawOval(
+        color = LcdBgColor,
+        topLeft = vp.pt(hx - 8f, hy + 29f),
+        size = Size(vp.x(26f), vp.y(11f))
+    )
+    drawOval(
+        color = ink,
+        topLeft = vp.pt(hx - 8f, hy + 29f),
+        size = Size(vp.x(26f), vp.y(11f)),
+        style = Stroke(width = vp.s(3.2f))
+    )
+
+    // Horni a dolni poloha ruky se zvoneckem
     val upInk = if (visible && bellUp) LcdInkOn else LcdInkGhost
     val downInk = if (visible && !bellUp) LcdInkOn else LcdInkGhost
 
-    drawHareBellHand(vp, startX = hx + 2f, startY = hy + 14f, bellX = hx + 58f, bellY = hy - 16f, ink = upInk)
-    drawHareBellHand(vp, startX = hx + 2f, startY = hy + 22f, bellX = hx + 46f, bellY = hy + 36f, ink = downInk)
+    drawHareBellHand(vp, startX = hx + 4f, startY = hy + 14f, bellX = hx + 58f, bellY = hy - 16f, ink = upInk)
+    drawHareBellHand(vp, startX = hx + 4f, startY = hy + 22f, bellX = hx + 46f, bellY = hy + 36f, ink = downInk)
 }
 
 private fun DrawScope.drawHareBellHand(
@@ -390,7 +418,7 @@ private fun DrawScope.drawHareBellHand(
         color = ink,
         start = vp.pt(startX, startY),
         end = vp.pt(bellX - 10f, bellY),
-        strokeWidth = vp.s(5f),
+        strokeWidth = vp.s(4.8f),
         cap = StrokeCap.Round
     )
     val bell = Path().apply {
@@ -427,7 +455,7 @@ internal fun DrawScope.drawScoreAndPenaltyChicks(
     drawClassicSevenSeg(vp, startX + (dw + gap) * 2f, topY, dw, dh, d2)
     drawClassicSevenSeg(vp, startX + (dw + gap) * 3f, topY, dw, dh, d3)
 
-    // 3 zretelna kuratka z profilu pod cislicemi (jako na ikone a originalu)
+    // 3 kuratka pod cislicemi skore
     for (idx in 0..2) {
         val thresholdFull = (idx + 1) * 2
         val thresholdHalf = thresholdFull - 1
@@ -449,13 +477,11 @@ private fun DrawScope.drawProfilePenaltyChick(
     cy: Float,
     ink: Color
 ) {
-    // Kulata hlavicka kuratka vlevo nahore
     drawCircle(
         color = ink,
         radius = vp.s(8.5f),
         center = vp.pt(cx - 8f, cy - 8f)
     )
-    // Zobacek smerujici doleva
     val beak = Path().apply {
         moveTo(vp.x(cx - 15f), vp.y(cy - 11f))
         lineTo(vp.x(cx - 24f), vp.y(cy - 8f))
@@ -464,14 +490,12 @@ private fun DrawScope.drawProfilePenaltyChick(
     }
     drawPath(beak, color = ink)
 
-    // Svetle ocicko
     drawCircle(
         color = LcdBgColor,
         radius = vp.s(1.8f),
         center = vp.pt(cx - 10f, cy - 9f)
     )
 
-    // Baculate telicko s ocaskem nahoru
     val body = Path().apply {
         moveTo(vp.x(cx - 12f), vp.y(cy - 2f))
         cubicTo(
@@ -485,7 +509,6 @@ private fun DrawScope.drawProfilePenaltyChick(
     }
     drawPath(body, color = ink)
 
-    // Jemne vyrezane kridelko uprostred telicka
     drawArc(
         color = LcdBgColor,
         startAngle = 20f,
@@ -496,7 +519,6 @@ private fun DrawScope.drawProfilePenaltyChick(
         style = Stroke(width = vp.s(2f), cap = StrokeCap.Round)
     )
 
-    // Dve nozicky
     drawLine(ink, vp.pt(cx - 2f, cy + 9f), vp.pt(cx - 5f, cy + 18f), vp.s(2.8f), StrokeCap.Round)
     drawLine(ink, vp.pt(cx + 6f, cy + 9f), vp.pt(cx + 9f, cy + 18f), vp.s(2.8f), StrokeCap.Round)
 }
@@ -550,49 +572,49 @@ internal fun DrawScope.drawCartoonWolfPosesAndBaskets(
     val leftInk = if (facingLeft || (celebrating && blinkPhase)) LcdInkOn else LcdInkGhost
     val rightInk = if (!facingLeft || (celebrating && !blinkPhase)) LcdInkOn else LcdInkGhost
 
-    // Dve propracovane postavy vlka podle ikony a originalniho LCD
-    drawIconStyleCartoonWolf(vp, baseX = 442f, facingLeft = true, ink = leftInk)
-    drawIconStyleCartoonWolf(vp, baseX = 558f, facingLeft = false, ink = rightInk)
+    // Dve komiksove perokresby vlka uprostred presne podle originalniho displeje IM-02
+    drawAuthenticLineArtWolf(vp, baseX = 446f, facingLeft = true, ink = leftInk)
+    drawAuthenticLineArtWolf(vp, baseX = 554f, facingLeft = false, ink = rightInk)
 
-    // 4 polohy rukou s rukavem, tlapkou a proutenym kosikem
-    drawWovenBasketWithArm(
+    // 4 polohy rukou s rukavem, tlapkou a plnym kosikem
+    drawAuthenticArmAndBasket(
         vp = vp,
-        shoulderX = 416f,
-        shoulderY = 344f,
-        elbowX = 378f,
-        elbowY = 342f,
+        shoulderX = 420f,
+        shoulderY = 342f,
+        elbowX = 382f,
+        elbowY = 346f,
         basketX = 312f,
-        basketY = 318f,
+        basketY = 320f,
         facingLeft = true,
         ink = if (wolfPos == BasketPosition.TOP_LEFT) LcdInkOn else LcdInkGhost
     )
-    drawWovenBasketWithArm(
+    drawAuthenticArmAndBasket(
         vp = vp,
-        shoulderX = 412f,
-        shoulderY = 372f,
-        elbowX = 374f,
+        shoulderX = 414f,
+        shoulderY = 368f,
+        elbowX = 378f,
         elbowY = 418f,
         basketX = 312f,
         basketY = 458f,
         facingLeft = true,
         ink = if (wolfPos == BasketPosition.BOTTOM_LEFT) LcdInkOn else LcdInkGhost
     )
-    drawWovenBasketWithArm(
+    drawAuthenticArmAndBasket(
         vp = vp,
-        shoulderX = 584f,
-        shoulderY = 344f,
-        elbowX = 622f,
-        elbowY = 342f,
+        shoulderX = 580f,
+        shoulderY = 342f,
+        elbowX = 618f,
+        elbowY = 346f,
         basketX = 688f,
-        basketY = 318f,
+        basketY = 320f,
         facingLeft = false,
         ink = if (wolfPos == BasketPosition.TOP_RIGHT) LcdInkOn else LcdInkGhost
     )
-    drawWovenBasketWithArm(
+    drawAuthenticArmAndBasket(
         vp = vp,
-        shoulderX = 588f,
-        shoulderY = 372f,
-        elbowX = 626f,
+        shoulderX = 586f,
+        shoulderY = 368f,
+        elbowX = 622f,
         elbowY = 418f,
         basketX = 688f,
         basketY = 458f,
@@ -601,206 +623,202 @@ internal fun DrawScope.drawCartoonWolfPosesAndBaskets(
     )
 }
 
-private fun DrawScope.drawIconStyleCartoonWolf(
+private fun DrawScope.drawAuthenticLineArtWolf(
     vp: LcdViewport,
     baseX: Float,
     facingLeft: Boolean,
     ink: Color
 ) {
     val dir = if (facingLeft) -1f else 1f
-    val outlineStroke = Stroke(width = vp.s(3.8f), cap = StrokeCap.Round, join = StrokeJoin.Round)
+    val outline = Stroke(width = vp.s(3.6f), cap = StrokeCap.Round, join = StrokeJoin.Round)
+    val thinOutline = Stroke(width = vp.s(2.6f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-    // 1. Namornicka capka s bilym vrskem a tmavym ksiltem (jako na ikone!)
-    val capCrown = Path().apply {
-        moveTo(vp.x(baseX - dir * 24f), vp.y(254f))
-        cubicTo(
-            vp.x(baseX - dir * 26f), vp.y(228f),
-            vp.x(baseX + dir * 14f), vp.y(226f),
-            vp.x(baseX + dir * 20f), vp.y(246f)
-        )
-        lineTo(vp.x(baseX - dir * 18f), vp.y(256f))
+    // 1. Cerna rozcuchana hriva vzadu na hlave a krku + 2 spicate vlci usi nahore (zadna koupaci cepice!)
+    val maneAndEars = Path().apply {
+        moveTo(vp.x(baseX - dir * 14f), vp.y(262f))
+        // Zadni spicate ucho
+        lineTo(vp.x(baseX - dir * 24f), vp.y(236f))
+        lineTo(vp.x(baseX - dir * 6f), vp.y(250f))
+        // Chomacek srsti mezi usima
+        lineTo(vp.x(baseX - dir * 2f), vp.y(240f))
+        lineTo(vp.x(baseX + dir * 4f), vp.y(250f))
+        // Predni spicate ucho
+        lineTo(vp.x(baseX + dir * 16f), vp.y(234f))
+        lineTo(vp.x(baseX + dir * 16f), vp.y(260f))
+        //Prechod do obliceje
+        lineTo(vp.x(baseX + dir * 6f), vp.y(316f))
+        lineTo(vp.x(baseX - dir * 16f), vp.y(318f))
+        // Rozcuchane chomace hrivy vzadu na krku
+        lineTo(vp.x(baseX - dir * 36f), vp.y(310f))
+        lineTo(vp.x(baseX - dir * 22f), vp.y(296f))
+        lineTo(vp.x(baseX - dir * 38f), vp.y(286f))
+        lineTo(vp.x(baseX - dir * 22f), vp.y(274f))
+        lineTo(vp.x(baseX - dir * 34f), vp.y(264f))
         close()
     }
-    drawPath(capCrown, color = LcdBgColor)
-    drawPath(capCrown, color = ink, style = outlineStroke)
+    drawPath(maneAndEars, color = ink)
 
-    // Tmavy pasek a ksilt capky + spicate vlci ucho
-    val visorAndEar = Path().apply {
-        moveTo(vp.x(baseX - dir * 22f), vp.y(252f))
-        lineTo(vp.x(baseX + dir * 28f), vp.y(246f))
-        lineTo(vp.x(baseX + dir * 24f), vp.y(256f))
-        lineTo(vp.x(baseX - dir * 18f), vp.y(260f))
-        // Spicate ucho vzadu
-        lineTo(vp.x(baseX - dir * 28f), vp.y(236f))
+    // Svetly vnitrek predniho ucha
+    val innerEar = Path().apply {
+        moveTo(vp.x(baseX + dir * 6f), vp.y(254f))
+        lineTo(vp.x(baseX + dir * 13f), vp.y(241f))
+        lineTo(vp.x(baseX + dir * 13f), vp.y(256f))
         close()
     }
-    drawPath(visorAndEar, color = ink)
+    drawPath(innerEar, color = LcdBgColor)
 
-    // 2. Hlava vlka s hunatymi licousy na zatylku (zadny spicatej jezek)
-    val headAndCheekFur = Path().apply {
-        moveTo(vp.x(baseX - dir * 18f), vp.y(258f))
-        // Dva mekke chomace srsti vzadu na krku
+    // 2. SVETLY OBLICEJ A DLOUHY CUMAK S CERNYM OBRYSEM (komiksova perokresba jako na IM-02)
+    val faceAndSnout = Path().apply {
+        // Celo a nadocni oblouk
+        moveTo(vp.x(baseX - dir * 6f), vp.y(260f))
+        lineTo(vp.x(baseX + dir * 18f), vp.y(258f))
+        lineTo(vp.x(baseX + dir * 22f), vp.y(272f))
+        // Dlouhy cumak mirne zvednuty nahoru
         cubicTo(
-            vp.x(baseX - dir * 36f), vp.y(264f),
-            vp.x(baseX - dir * 40f), vp.y(278f),
-            vp.x(baseX - dir * 24f), vp.y(284f)
+            vp.x(baseX + dir * 36f), vp.y(272f),
+            vp.x(baseX + dir * 48f), vp.y(266f),
+            vp.x(baseX + dir * 56f), vp.y(272f)
         )
-        cubicTo(
-            vp.x(baseX - dir * 40f), vp.y(292f),
-            vp.x(baseX - dir * 38f), vp.y(308f),
-            vp.x(baseX - dir * 18f), vp.y(316f)
-        )
-        lineTo(vp.x(baseX + dir * 14f), vp.y(316f))
-        lineTo(vp.x(baseX + dir * 18f), vp.y(256f))
-        close()
-    }
-    drawPath(headAndCheekFur, color = ink)
-
-    // Velke vyrazne oko vlka s obocim (jako na ikone)
-    drawOval(
-        color = LcdBgColor,
-        topLeft = vp.pt(baseX + dir * 6f - 8f, 260f),
-        size = Size(vp.x(16f), vp.y(22f))
-    )
-    drawCircle(
-        color = ink,
-        radius = vp.s(3.6f),
-        center = vp.pt(baseX + dir * 9f, 271f)
-    )
-
-    // 3. Klenuty vlci cumak s velkym cernym nosem, usmevem a vycenenym spicakem
-    val snoutUpper = Path().apply {
-        moveTo(vp.x(baseX + dir * 14f), vp.y(268f))
-        cubicTo(
-            vp.x(baseX + dir * 32f), vp.y(268f),
-            vp.x(baseX + dir * 48f), vp.y(262f),
-            vp.x(baseX + dir * 56f), vp.y(270f)
-        )
+        // Zaoblena spicka horniho pysku
         cubicTo(
             vp.x(baseX + dir * 58f), vp.y(286f),
             vp.x(baseX + dir * 42f), vp.y(294f),
-            vp.x(baseX + dir * 14f), vp.y(292f)
+            vp.x(baseX + dir * 18f), vp.y(292f)
+        )
+        // Otevrena tlama a spodni celist
+        lineTo(vp.x(baseX + dir * 40f), vp.y(304f))
+        cubicTo(
+            vp.x(baseX + dir * 34f), vp.y(316f),
+            vp.x(baseX + dir * 16f), vp.y(316f),
+            vp.x(baseX - dir * 4f), vp.y(306f)
+        )
+        // Tvar vzadu
+        cubicTo(
+            vp.x(baseX - dir * 14f), vp.y(298f),
+            vp.x(baseX - dir * 14f), vp.y(274f),
+            vp.x(baseX - dir * 6f), vp.y(260f)
         )
         close()
     }
-    drawPath(snoutUpper, color = LcdBgColor)
-    drawPath(snoutUpper, color = ink, style = outlineStroke)
+    drawPath(faceAndSnout, color = LcdBgColor)
+    drawPath(faceAndSnout, color = ink, style = outline)
 
-    // Velky cerny nos na spicce cumaku
+    // Dve komiksove oci vedle sebe + oboci
     drawOval(
         color = ink,
-        topLeft = vp.pt(baseX + dir * 52f - 7f, 258f),
-        size = Size(vp.x(14f), vp.y(18f))
+        topLeft = vp.pt(baseX + dir * 2f - 3.5f, 265f),
+        size = Size(vp.x(7f), vp.y(12f))
     )
-    // Odlesk na nose
-    drawCircle(
-        color = LcdBgColor,
-        radius = vp.s(1.8f),
-        center = vp.pt(baseX + dir * 50f, 263f)
+    drawOval(
+        color = ink,
+        topLeft = vp.pt(baseX + dir * 11f - 3.5f, 265f),
+        size = Size(vp.x(7f), vp.y(12f))
+    )
+    drawLine(
+        color = ink,
+        start = vp.pt(baseX - dir * 2f, 261f),
+        end = vp.pt(baseX + dir * 16f, 262f),
+        strokeWidth = vp.s(2.8f),
+        cap = StrokeCap.Round
     )
 
-    // Spodni celist a bily spicaty zub
-    val lowerJaw = Path().apply {
-        moveTo(vp.x(baseX + dir * 10f), vp.y(292f))
-        lineTo(vp.x(baseX + dir * 40f), vp.y(302f))
-        cubicTo(
-            vp.x(baseX + dir * 36f), vp.y(314f),
-            vp.x(baseX + dir * 20f), vp.y(316f),
-            vp.x(baseX + dir * 6f), vp.y(308f)
-        )
-        close()
-    }
-    drawPath(lowerJaw, color = ink)
+    // Velky cerny nos na spicce cumaku + tecky fousku + vyplazeny jazyk v tlame
+    drawOval(
+        color = ink,
+        topLeft = vp.pt(baseX + dir * 52f - 6.5f, 260f),
+        size = Size(vp.x(13f), vp.y(16f))
+    )
+    drawCircle(color = ink, radius = vp.s(1.8f), center = vp.pt(baseX + dir * 32f, 282f))
+    drawCircle(color = ink, radius = vp.s(1.8f), center = vp.pt(baseX + dir * 39f, 280f))
+    drawLine(
+        color = ink,
+        start = vp.pt(baseX + dir * 20f, 297f),
+        end = vp.pt(baseX + dir * 34f, 299f),
+        strokeWidth = vp.s(3.0f),
+        cap = StrokeCap.Round
+    )
 
-    // Vyceneny bily spicak pod horni celisti
-    val fang = Path().apply {
-        moveTo(vp.x(baseX + dir * 34f), vp.y(291f))
-        lineTo(vp.x(baseX + dir * 39f), vp.y(301f))
-        lineTo(vp.x(baseX + dir * 44f), vp.y(290f))
-        close()
-    }
-    drawPath(fang, color = LcdBgColor)
-    drawPath(fang, color = ink, style = Stroke(width = vp.s(2.2f), join = StrokeJoin.Round))
-
-    // 4. Trup vlka s namornickym V-limeckem a paskem
+    // 3. Prohnuty tmavy trup vlka (tmava kosile s bilym limeckem a paskem, BEZ bobku u zadku)
     val torso = Path().apply {
-        moveTo(vp.x(baseX - dir * 20f), vp.y(314f))
-        lineTo(vp.x(baseX + dir * 18f), vp.y(314f))
+        moveTo(vp.x(baseX - dir * 14f), vp.y(314f))
+        lineTo(vp.x(baseX + dir * 16f), vp.y(314f))
         cubicTo(
-            vp.x(baseX + dir * 28f), vp.y(350f),
-            vp.x(baseX + dir * 24f), vp.y(384f),
-            vp.x(baseX + dir * 16f), vp.y(410f)
+            vp.x(baseX + dir * 28f), vp.y(348f),
+            vp.x(baseX + dir * 24f), vp.y(382f),
+            vp.x(baseX + dir * 14f), vp.y(408f)
         )
-        lineTo(vp.x(baseX - dir * 24f), vp.y(406f))
+        lineTo(vp.x(baseX - dir * 20f), vp.y(402f))
         cubicTo(
-            vp.x(baseX - dir * 18f), vp.y(376f),
-            vp.x(baseX - dir * 16f), vp.y(344f),
-            vp.x(baseX - dir * 20f), vp.y(314f)
+            vp.x(baseX - dir * 10f), vp.y(374f),
+            vp.x(baseX - dir * 8f), vp.y(344f),
+            vp.x(baseX - dir * 14f), vp.y(314f)
         )
         close()
     }
     drawPath(torso, color = ink)
 
-    // Svetly namornicky limecek na hrudi
-    val sailorCollar = Path().apply {
-        moveTo(vp.x(baseX - dir * 12f), vp.y(315f))
-        lineTo(vp.x(baseX + dir * 16f), vp.y(315f))
-        lineTo(vp.x(baseX + dir * 8f), vp.y(346f))
+    // Svetly limecek u krku a pasek v pase
+    val collar = Path().apply {
+        moveTo(vp.x(baseX - dir * 8f), vp.y(315f))
+        lineTo(vp.x(baseX + dir * 14f), vp.y(315f))
+        lineTo(vp.x(baseX + dir * 5f), vp.y(336f))
         close()
     }
-    drawPath(sailorCollar, color = LcdBgColor)
+    drawPath(collar, color = LcdBgColor)
+    drawLine(LcdBgColor, vp.pt(baseX - 19f, 400f), vp.pt(baseX + 16f, 405f), vp.s(4.0f), StrokeCap.Round)
 
-    // Prouzky na triku a pasek
-    drawLine(LcdBgColor, vp.pt(baseX - 16f, 362f), vp.pt(baseX + 16f, 364f), vp.s(3f))
-    drawLine(LcdBgColor, vp.pt(baseX - 18f, 382f), vp.pt(baseX + 16f, 384f), vp.s(3f))
-    drawLine(LcdBgColor, vp.pt(baseX - 22f, 404f), vp.pt(baseX + 18f, 408f), vp.s(4.5f))
-
-    // Hunaty ocas vzadu za pasem
-    val tail = Path().apply {
-        moveTo(vp.x(baseX - dir * 22f), vp.y(398f))
+    // 4. DVOJITE VYKRESLENE VLCI NOHY A TLAPKY (svetla vyplni s cernym obrysem, zadne dratky!)
+    val frontLeg = Path().apply {
+        moveTo(vp.x(baseX + dir * 24f), vp.y(442f))
+        lineTo(vp.x(baseX + dir * 12f), vp.y(488f))
+        lineTo(vp.x(baseX + dir * 44f), vp.y(492f))
         cubicTo(
-            vp.x(baseX - dir * 48f), vp.y(392f),
-            vp.x(baseX - dir * 54f), vp.y(422f),
-            vp.x(baseX - dir * 32f), vp.y(428f)
+            vp.x(baseX + dir * 48f), vp.y(482f),
+            vp.x(baseX + dir * 34f), vp.y(480f),
+            vp.x(baseX + dir * 24f), vp.y(480f)
         )
+        lineTo(vp.x(baseX + dir * 36f), vp.y(448f))
         close()
     }
-    drawPath(tail, color = ink)
+    val backLeg = Path().apply {
+        moveTo(vp.x(baseX - dir * 36f), vp.y(446f))
+        lineTo(vp.x(baseX - dir * 16f), vp.y(492f))
+        lineTo(vp.x(baseX - dir * 46f), vp.y(496f))
+        cubicTo(
+            vp.x(baseX - dir * 50f), vp.y(486f),
+            vp.x(baseX - dir * 36f), vp.y(484f),
+            vp.x(baseX - dir * 28f), vp.y(484f)
+        )
+        lineTo(vp.x(baseX - dir * 24f), vp.y(442f))
+        close()
+    }
+    drawPath(frontLeg, color = LcdBgColor)
+    drawPath(frontLeg, color = ink, style = outline)
+    drawPath(backLeg, color = LcdBgColor)
+    drawPath(backLeg, color = ink, style = outline)
 
-    // 5. Siroce rozkrocene kratasy s puntiky a pevne nohy s tlapkami
+    // 5. Siroce rozkrocene svetle kratasy s cernym obrysem a kytickami/puntiky
     val shorts = Path().apply {
-        moveTo(vp.x(baseX - dir * 24f), vp.y(406f))
-        lineTo(vp.x(baseX + dir * 18f), vp.y(410f))
-        lineTo(vp.x(baseX + dir * 46f), vp.y(448f))
-        lineTo(vp.x(baseX + dir * 24f), vp.y(462f))
-        lineTo(vp.x(baseX - dir * 2f), vp.y(436f))
-        lineTo(vp.x(baseX - dir * 24f), vp.y(464f))
-        lineTo(vp.x(baseX - dir * 46f), vp.y(448f))
+        moveTo(vp.x(baseX - dir * 20f), vp.y(402f))
+        lineTo(vp.x(baseX + dir * 16f), vp.y(406f))
+        lineTo(vp.x(baseX + dir * 44f), vp.y(442f))
+        lineTo(vp.x(baseX + dir * 22f), vp.y(456f))
+        lineTo(vp.x(baseX - dir * 2f), vp.y(432f))
+        lineTo(vp.x(baseX - dir * 22f), vp.y(458f))
+        lineTo(vp.x(baseX - dir * 44f), vp.y(442f))
         close()
     }
     drawPath(shorts, color = LcdBgColor)
-    drawPath(shorts, color = ink, style = outlineStroke)
-    drawCircle(ink, radius = vp.s(2.8f), center = vp.pt(baseX + dir * 20f, 442f))
-    drawCircle(ink, radius = vp.s(2.8f), center = vp.pt(baseX - dir * 20f, 444f))
-    drawCircle(ink, radius = vp.s(2.8f), center = vp.pt(baseX - dir * 3f, 422f))
+    drawPath(shorts, color = ink, style = outline)
 
-    // Pokrcene nohy a tlapky
-    val legStroke = Stroke(width = vp.s(7.2f), cap = StrokeCap.Round, join = StrokeJoin.Round)
-    val frontLeg = Path().apply {
-        moveTo(vp.x(baseX + dir * 35f), vp.y(454f))
-        lineTo(vp.x(baseX + dir * 18f), vp.y(494f))
-        lineTo(vp.x(baseX + dir * 44f), vp.y(498f))
-    }
-    val backLeg = Path().apply {
-        moveTo(vp.x(baseX - dir * 35f), vp.y(456f))
-        lineTo(vp.x(baseX - dir * 16f), vp.y(496f))
-        lineTo(vp.x(baseX - dir * 42f), vp.y(500f))
-    }
-    drawPath(frontLeg, color = ink, style = legStroke)
-    drawPath(backLeg, color = ink, style = legStroke)
+    // Kyticky / puntiky na kratasech
+    drawCircle(ink, radius = vp.s(2.8f), center = vp.pt(baseX + dir * 18f, 436f))
+    drawCircle(ink, radius = vp.s(2.8f), center = vp.pt(baseX - dir * 18f, 438f))
+    drawCircle(ink, radius = vp.s(2.8f), center = vp.pt(baseX - dir * 2f, 418f))
+    drawLine(ink, vp.pt(baseX - dir * 2f, 408f), vp.pt(baseX - dir * 2f, 432f), vp.s(2.4f), StrokeCap.Round)
 }
 
-private fun DrawScope.drawWovenBasketWithArm(
+private fun DrawScope.drawAuthenticArmAndBasket(
     vp: LcdViewport,
     shoulderX: Float,
     shoulderY: Float,
@@ -812,99 +830,90 @@ private fun DrawScope.drawWovenBasketWithArm(
     ink: Color
 ) {
     val dir = if (facingLeft) -1f else 1f
-    val handX = basketX - dir * 30f
-    val handY = basketY - 12f
+    val handX = basketX - dir * 28f
+    val handY = basketY - 6f
+    val outline = Stroke(width = vp.s(3.4f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-    // Paze s rukavem a tlapkou drzici ucho kosiku
-    val armPath = Path().apply {
-        moveTo(vp.x(shoulderX), vp.y(shoulderY))
-        lineTo(vp.x(elbowX), vp.y(elbowY))
-        lineTo(vp.x(handX), vp.y(handY))
+    // 1. Dvojite vykreslena komiksova paze se svetlym vnitrekem a tlapkou (misto jedne cary)
+    val armPolygon = Path().apply {
+        moveTo(vp.x(shoulderX), vp.y(shoulderY - 6f))
+        lineTo(vp.x(elbowX), vp.y(elbowY - 6f))
+        lineTo(vp.x(handX), vp.y(handY - 5f))
+        lineTo(vp.x(handX + dir * 10f), vp.y(handY + 2f))
+        lineTo(vp.x(handX), vp.y(handY + 7f))
+        lineTo(vp.x(elbowX), vp.y(elbowY + 6f))
+        lineTo(vp.x(shoulderX), vp.y(shoulderY + 6f))
+        close()
     }
-    drawPath(
-        path = armPath,
+    drawPath(armPolygon, color = LcdBgColor)
+    drawPath(armPolygon, color = ink, style = outline)
+
+    // Ohrnuty rukav u ramene
+    drawLine(
         color = ink,
-        style = Stroke(width = vp.s(7.5f), cap = StrokeCap.Round, join = StrokeJoin.Round)
-    )
-    // Kulata tlapka svirajici kosik
-    drawCircle(
-        color = ink,
-        radius = vp.s(6.5f),
-        center = vp.pt(handX, handY)
+        start = vp.pt(shoulderX + dir * 8f, shoulderY - 8f),
+        end = vp.pt(shoulderX + dir * 6f, shoulderY + 8f),
+        strokeWidth = vp.s(4.2f),
+        cap = StrokeCap.Round
     )
 
-    // Prouteny kosik s horni obrubou, uchem a mrizkovym vypletem (jako na ikone)
+    // 2. Plny cerny zaobleny kosik se svetlym hornim lemem a bocnim odleskem (bez mrizky #)
     val tiltDeg = if (facingLeft) -10f else 10f
     val pivot = vp.pt(basketX, basketY)
-    val bw = 68f
-    val bh = 42f
+    val bw = 64f
+    val bh = 40f
 
     rotate(degrees = tiltDeg, pivot = pivot) {
-        // Horni obloukove ucho kosiku
-        drawArc(
-            color = ink,
-            startAngle = 195f,
-            sweepAngle = 150f,
-            useCenter = false,
-            topLeft = vp.pt(basketX - bw * 0.34f, basketY - bh * 0.78f),
-            size = Size(vp.x(bw * 0.68f), vp.y(bh * 0.72f)),
-            style = Stroke(width = vp.s(4.0f), cap = StrokeCap.Round)
-        )
-
-        // Telo kosiku
         val basketBowl = Path().apply {
             moveTo(vp.x(basketX - bw * 0.50f), vp.y(basketY - bh * 0.22f))
             lineTo(vp.x(basketX + bw * 0.50f), vp.y(basketY - bh * 0.22f))
             cubicTo(
-                vp.x(basketX + bw * 0.46f), vp.y(basketY + bh * 0.55f),
-                vp.x(basketX + bw * 0.24f), vp.y(basketY + bh * 0.72f),
-                vp.x(basketX), vp.y(basketY + bh * 0.72f)
+                vp.x(basketX + bw * 0.48f), vp.y(basketY + bh * 0.56f),
+                vp.x(basketX + bw * 0.24f), vp.y(basketY + bh * 0.74f),
+                vp.x(basketX), vp.y(basketY + bh * 0.74f)
             )
             cubicTo(
-                vp.x(basketX - bw * 0.24f), vp.y(basketY + bh * 0.72f),
-                vp.x(basketX - bw * 0.46f), vp.y(basketY + bh * 0.55f),
+                vp.x(basketX - bw * 0.24f), vp.y(basketY + bh * 0.74f),
+                vp.x(basketX - bw * 0.48f), vp.y(basketY + bh * 0.56f),
                 vp.x(basketX - bw * 0.50f), vp.y(basketY - bh * 0.22f)
             )
             close()
         }
         drawPath(basketBowl, color = ink)
 
-        // Svetle proutene prouzky na kosiku (dodaji vzhled pleteneho kosiku)
-        drawLine(
+        // Jemny svetly bocni odlesk na kosiku (jako na fotce IM-02)
+        drawArc(
             color = LcdBgColor,
-            start = vp.pt(basketX - bw * 0.38f, basketY + bh * 0.12f),
-            end = vp.pt(basketX + bw * 0.38f, basketY + bh * 0.12f),
-            strokeWidth = vp.s(2.4f),
-            cap = StrokeCap.Round
+            startAngle = if (facingLeft) 25f else 115f,
+            sweepAngle = 45f,
+            useCenter = false,
+            topLeft = vp.pt(basketX - bw * 0.36f, basketY - bh * 0.05f),
+            size = Size(vp.x(bw * 0.72f), vp.y(bh * 0.62f)),
+            style = Stroke(width = vp.s(2.8f), cap = StrokeCap.Round)
         )
-        drawLine(
-            color = LcdBgColor,
-            start = vp.pt(basketX - bw * 0.28f, basketY + bh * 0.40f),
-            end = vp.pt(basketX + bw * 0.28f, basketY + bh * 0.40f),
-            strokeWidth = vp.s(2.4f),
-            cap = StrokeCap.Round
-        )
-        for (ox in listOf(-15f, 0f, 15f)) {
-            drawLine(
-                color = LcdBgColor,
-                start = vp.pt(basketX + ox, basketY - bh * 0.05f),
-                end = vp.pt(basketX + ox * 0.8f, basketY + bh * 0.55f),
-                strokeWidth = vp.s(2.2f),
-                cap = StrokeCap.Round
-            )
-        }
 
-        // Svetly otvor kosiku nahore
+        // Svetly otvor kosiku nahore s dvojitou obrubou
         drawOval(
             color = LcdBgColor,
             topLeft = vp.pt(basketX - bw * 0.46f, basketY - bh * 0.30f),
-            size = Size(vp.x(bw * 0.92f), vp.y(bh * 0.26f))
+            size = Size(vp.x(bw * 0.92f), vp.y(bh * 0.28f))
         )
         drawOval(
             color = ink,
             topLeft = vp.pt(basketX - bw * 0.46f, basketY - bh * 0.30f),
-            size = Size(vp.x(bw * 0.92f), vp.y(bh * 0.26f)),
+            size = Size(vp.x(bw * 0.92f), vp.y(bh * 0.28f)),
             style = Stroke(width = vp.s(3.4f))
+        )
+
+        // Ucho kosiku u ruky vlka
+        drawArc(
+            color = ink,
+            startAngle = if (facingLeft) -50f else 130f,
+            sweepAngle = 110f,
+            useCenter = false,
+            topLeft = vp.pt(basketX - dir * 32f - 10f, basketY - 18f),
+            size = Size(vp.x(20f), vp.y(22f)),
+            style = Stroke(width = vp.s(3.4f), cap = StrokeCap.Round)
         )
     }
 }
