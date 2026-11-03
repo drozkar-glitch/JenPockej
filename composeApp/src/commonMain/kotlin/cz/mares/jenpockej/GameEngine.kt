@@ -16,7 +16,8 @@ enum class GameMode(val label: String) {
 
 data class EggItem(
     val ramp: Int,
-    val step: Int
+    val step: Int,
+    val caughtByWolf: Boolean = false
 )
 
 data class CrashAnimState(
@@ -61,8 +62,9 @@ class GameEngine(private val media: SoundPlayer) {
         private set
 
     private var tickCounter = 0
-    private var hareTimer = 8
+    private var hareTimer = 10
     private var spawnCooldown = 0
+    private var lastSpawnedRamp = 0
     private var inactiveRampForGameA = 3
 
     fun moveWolf(target: BasketPosition) {
@@ -73,8 +75,26 @@ class GameEngine(private val media: SoundPlayer) {
             }
             return
         }
-        if (state.wolfPosition != target) {
-            state = state.copy(wolfPosition = target)
+
+        val positionChanged = state.wolfPosition != target
+        state = state.copy(wolfPosition = target)
+
+        // Pokud je na cilove rampe vajicko na posledni pozici (step == 4) a neprobiha animace padu,
+        // okamzite ho zachytime do kosiku, aby hrac mohl hned prebehnout jinam
+        if (state.isRunning && !state.isGameOver && state.crashAnim == null) {
+            val rescuedCount = state.eggs.count {
+                it.ramp == target.rampIndex && it.step == 4 && !it.caughtByWolf
+            }
+            if (rescuedCount > 0) {
+                val remainingEggs = state.eggs.filterNot {
+                    it.ramp == target.rampIndex && it.step == 4
+                }
+                awardPointsAndSave(rescuedCount, remainingEggs)
+                return
+            }
+        }
+
+        if (positionChanged) {
             if (state.soundEnabled) {
                 media.play(SoundEffect.BUTTON)
             }
@@ -104,16 +124,19 @@ class GameEngine(private val media: SoundPlayer) {
 
     fun startNewGame(mode: GameMode) {
         inactiveRampForGameA = Random.nextInt(4)
+        val firstRamp = (0..3).first { mode == GameMode.GAME_B || it != inactiveRampForGameA }
+        lastSpawnedRamp = firstRamp
         tickCounter = 0
         hareTimer = 10
-        spawnCooldown = 0
+        spawnCooldown = 3
+
         state = state.copy(
             mode = mode,
             isRunning = true,
             isDemoMode = false,
             isGameOver = false,
             score = 0,
-            eggs = listOf(EggItem(ramp = 0, step = 0)),
+            eggs = listOf(EggItem(ramp = firstRamp, step = 0)),
             hareVisible = false,
             hareBellUp = false,
             penaltyHalfPoints = 0,
@@ -130,6 +153,7 @@ class GameEngine(private val media: SoundPlayer) {
 
     fun resetToDemo() {
         tickCounter = 0
+        spawnCooldown = 2
         state = state.copy(
             isRunning = false,
             isDemoMode = true,
@@ -148,12 +172,16 @@ class GameEngine(private val media: SoundPlayer) {
 
     fun currentTickDelayMs(): Long {
         if (state.isGameOver) return 450L
-        if (state.isDemoMode && !state.isRunning) return 580L
-        if (state.crashAnim != null) return 260L
+        if (state.isDemoMode && !state.isRunning) return 600L
+        if (state.crashAnim != null) return 280L
 
-        val baseDelay = if (state.mode == GameMode.GAME_A) 660L else 520L
-        val speedUp = ((state.score % 100) * 3L) + ((state.score / 100) * 42L)
-        return (baseDelay - speedUp).coerceIn(210L, 660L)
+        // Plynule tempo s odpocinkovymi vlnami po kazde stovce bodu (jako v originalnim IM-02)
+        val baseDelay = if (state.mode == GameMode.GAME_A) 820L else 680L
+        val minDelay = if (state.mode == GameMode.GAME_A) 380L else 320L
+        val withinHundred = (state.score % 100) * 3L
+        val hundredTier = (state.score / 100).coerceAtMost(5) * 38L
+
+        return (baseDelay - withinHundred - hundredTier).coerceIn(minDelay, baseDelay)
     }
 
     fun stepTick() {
@@ -164,7 +192,6 @@ class GameEngine(private val media: SoundPlayer) {
             return
         }
 
-        // Automaticke DEMO (kdyz hrac jeste neodstartoval hru)
         if (state.isDemoMode && !state.isRunning) {
             stepDemoTick(nextBlink)
             return
@@ -179,10 +206,15 @@ class GameEngine(private val media: SoundPlayer) {
                 )
             } else {
                 val nowGameOver = state.penaltyHalfPoints >= 6
+                val restartRamp = (0..3).first {
+                    state.mode == GameMode.GAME_B || it != inactiveRampForGameA
+                }
+                spawnCooldown = 3
                 state = state.copy(
                     crashAnim = null,
                     isGameOver = nowGameOver,
                     isRunning = !nowGameOver,
+                    eggs = if (nowGameOver) emptyList() else listOf(EggItem(restartRamp, 0)),
                     blinkPhase = nextBlink
                 )
                 if (nowGameOver) {
@@ -204,9 +236,9 @@ class GameEngine(private val media: SoundPlayer) {
         if (hareTimer <= 0) {
             hareNow = !hareNow
             hareTimer = if (hareNow) {
-                Random.nextInt(5, 10)
+                Random.nextInt(6, 11)
             } else {
-                Random.nextInt(12, 22)
+                Random.nextInt(12, 20)
             }
         }
 
@@ -216,9 +248,18 @@ class GameEngine(private val media: SoundPlayer) {
 
         for (egg in state.eggs) {
             if (egg.step < 4) {
-                updatedEggs.add(egg.copy(step = egg.step + 1))
+                val nextStep = egg.step + 1
+                // Pokud vlk uz stoji pod rampou ve chvili, kdy vajicko dorazi na konec (step == 4),
+                // oznacime ho jako bezpecne zachycene (i kdyby hrac vzapeti prebehl jinam)
+                val lockedCatch = nextStep == 4 && state.wolfPosition.rampIndex == egg.ramp
+                updatedEggs.add(
+                    egg.copy(
+                        step = nextStep,
+                        caughtByWolf = egg.caughtByWolf || lockedCatch
+                    )
+                )
             } else {
-                if (state.wolfPosition.rampIndex == egg.ramp) {
+                if (egg.caughtByWolf || state.wolfPosition.rampIndex == egg.ramp) {
                     gainedPoints++
                 } else {
                     droppedRamp = egg.ramp
@@ -247,6 +288,79 @@ class GameEngine(private val media: SoundPlayer) {
             return
         }
 
+        if (state.mode == GameMode.GAME_A && tickCounter % 24 == 0) {
+            inactiveRampForGameA = (inactiveRampForGameA + 1) % 4
+        }
+
+        val maxSimultaneousEggs = when {
+            state.mode == GameMode.GAME_A && state.score < 25 -> 2
+            state.mode == GameMode.GAME_A && state.score < 90 -> 3
+            state.mode == GameMode.GAME_A -> 4
+            state.score < 20 -> 2
+            state.score < 70 -> 3
+            else -> 4
+        }
+
+        val minGap = when {
+            state.mode == GameMode.GAME_A && state.score < 25 -> 3
+            state.mode == GameMode.GAME_A && state.score < 120 -> 2
+            state.mode == GameMode.GAME_A -> 2
+            state.score < 15 -> 3
+            state.score < 90 -> 2
+            else -> 1
+        }
+
+        if (spawnCooldown > 0) {
+            spawnCooldown--
+        }
+
+        if (updatedEggs.isEmpty() || (updatedEggs.size < maxSimultaneousEggs && spawnCooldown == 0)) {
+            val lastSideLeft = lastSpawnedRamp == 0 || lastSpawnedRamp == 1
+            val hasTightPreviousEgg = updatedEggs.any { it.step <= 1 }
+
+            val candidateRamps = (0..3).filter { ramp ->
+                val allowedInMode = state.mode == GameMode.GAME_B || ramp != inactiveRampForGameA
+                val freeAtStart = updatedEggs.none { it.ramp == ramp && it.step <= 1 }
+                // Pokud je predchozi vajicko tesne za startem, dalsi vyjede na stejne strane
+                val sideFair = !hasTightPreviousEgg || ((ramp == 0 || ramp == 1) == lastSideLeft)
+                allowedInMode && freeAtStart && sideFair
+            }
+
+            if (candidateRamps.isNotEmpty() && (updatedEggs.isEmpty() || Random.nextFloat() < 0.75f)) {
+                val chosenRamp = candidateRamps.random()
+                updatedEggs.add(EggItem(ramp = chosenRamp, step = 0))
+                lastSpawnedRamp = chosenRamp
+                spawnCooldown = minGap
+            }
+        }
+
+        state = state.copy(
+            hareVisible = hareNow,
+            hareBellUp = if (hareNow) !state.hareBellUp else false,
+            blinkPhase = nextBlink
+        )
+
+        if (gainedPoints > 0) {
+            awardPointsAndSave(gainedPoints, updatedEggs)
+        } else {
+            val nextCelebration = if (state.celebrationTicks > 0) state.celebrationTicks - 1 else 0
+            state = state.copy(
+                eggs = updatedEggs,
+                celebrationTicks = nextCelebration
+            )
+            if (state.soundEnabled && updatedEggs.isNotEmpty()) {
+                val tickSound = when (tickCounter % 4) {
+                    0 -> SoundEffect.TICK_RAMP_0
+                    1 -> SoundEffect.TICK_RAMP_1
+                    2 -> SoundEffect.TICK_RAMP_2
+                    else -> SoundEffect.TICK_RAMP_3
+                }
+                media.play(tickSound)
+            }
+        }
+    }
+
+    private fun awardPointsAndSave(gainedPoints: Int, updatedEggs: List<EggItem>) {
         val prevScore = state.score
         val rawNewScore = prevScore + gainedPoints
         val reachedThousand = prevScore < 1000 && rawNewScore >= 1000
@@ -254,7 +368,11 @@ class GameEngine(private val media: SoundPlayer) {
         var newPenalty = state.penaltyHalfPoints
         var bonusTriggered = false
 
-        if (gainedPoints > 0 && (newScore == 200 || newScore == 500 || reachedThousand)) {
+        if (
+            (prevScore < 200 && newScore >= 200) ||
+            (prevScore < 500 && newScore >= 500) ||
+            reachedThousand
+        ) {
             newPenalty = 0
             bonusTriggered = true
         }
@@ -263,37 +381,6 @@ class GameEngine(private val media: SoundPlayer) {
             reachedThousand -> 16
             state.celebrationTicks > 0 -> state.celebrationTicks - 1
             else -> 0
-        }
-
-        if (state.mode == GameMode.GAME_A && tickCounter % 18 == 0) {
-            inactiveRampForGameA = (inactiveRampForGameA + 1) % 4
-        }
-
-        val maxSimultaneousEggs = when {
-            state.mode == GameMode.GAME_A && newScore < 30 -> 2
-            state.mode == GameMode.GAME_A && newScore < 100 -> 3
-            state.mode == GameMode.GAME_A -> 4
-            newScore < 20 -> 2
-            newScore < 70 -> 3
-            else -> 5
-        }
-
-        val minGap = if (state.mode == GameMode.GAME_A && newScore < 80) 2 else 1
-        if (spawnCooldown > 0) {
-            spawnCooldown--
-        }
-
-        if (updatedEggs.isEmpty() || (updatedEggs.size < maxSimultaneousEggs && spawnCooldown == 0)) {
-            val candidateRamps = (0..3).filter { ramp ->
-                val allowedInMode = state.mode == GameMode.GAME_B || ramp != inactiveRampForGameA
-                val freeAtStart = updatedEggs.none { it.ramp == ramp && it.step <= 1 }
-                allowedInMode && freeAtStart
-            }
-            if (candidateRamps.isNotEmpty() && (updatedEggs.isEmpty() || Random.nextFloat() < 0.72f)) {
-                val chosenRamp = candidateRamps.random()
-                updatedEggs.add(EggItem(ramp = chosenRamp, step = 0))
-                spawnCooldown = minGap
-            }
         }
 
         var bestA = state.highScoreA
@@ -312,33 +399,22 @@ class GameEngine(private val media: SoundPlayer) {
             highScoreA = bestA,
             highScoreB = bestB,
             eggs = updatedEggs,
-            hareVisible = hareNow,
-            hareBellUp = if (hareNow) !state.hareBellUp else false,
             penaltyHalfPoints = newPenalty,
-            blinkPhase = nextBlink,
             celebrationTicks = nextCelebration
         )
 
         if (state.soundEnabled) {
-            when {
-                bonusTriggered -> media.play(SoundEffect.BONUS)
-                gainedPoints > 0 -> media.play(SoundEffect.CATCH)
-                updatedEggs.isNotEmpty() -> {
-                    val soundEffect = when (tickCounter % 4) {
-                        0 -> SoundEffect.TICK_RAMP_0
-                        1 -> SoundEffect.TICK_RAMP_1
-                        2 -> SoundEffect.TICK_RAMP_2
-                        else -> SoundEffect.TICK_RAMP_3
-                    }
-                    media.play(soundEffect)
-                }
+            if (bonusTriggered) {
+                media.play(SoundEffect.BONUS)
+            } else {
+                media.play(SoundEffect.CATCH)
             }
         }
-
         if (state.hapticsEnabled) {
-            when {
-                bonusTriggered -> media.vibrate(HapticType.BONUS)
-                gainedPoints > 0 -> media.vibrate(HapticType.CATCH)
+            if (bonusTriggered) {
+                media.vibrate(HapticType.BONUS)
+            } else {
+                media.vibrate(HapticType.CATCH)
             }
         }
     }
