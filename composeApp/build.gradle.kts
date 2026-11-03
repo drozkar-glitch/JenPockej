@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.File
 import java.util.Properties
 
 plugins {
@@ -52,8 +53,7 @@ val appVer = System.getenv("APP_VERSION")?.takeIf { it.isNotBlank() }
     ?: project.findProperty("versionName")?.toString()?.takeIf { it.isNotBlank() }
     ?: "1.0"
 
-// Nacteni trvaleho podpisoveho klice (z ios-keys / keystore.properties / env),
-// aby sel novy build v telefonu vzdy preinstalovat bez nutnosti odinstalace
+// Nacteni trvaleho podpisoveho klice z ios-keys pres CM_KEYSTORE_* / android_keystore.props
 val keystoreProps = Properties()
 val propCandidates = listOf(
     rootProject.file("keystore.properties"),
@@ -66,17 +66,28 @@ propCandidates.firstOrNull { it.isFile }?.inputStream()?.use { keystoreProps.loa
 
 fun propOrEnv(vararg keys: String): String? {
     for (k in keys) {
-        val fromProps = keystoreProps.getProperty(k)?.trim()?.takeIf { it.isNotEmpty() }
-        if (fromProps != null) return fromProps
         val fromEnv = System.getenv(k)?.trim()?.takeIf { it.isNotEmpty() }
         if (fromEnv != null) return fromEnv
+        val fromProps = keystoreProps.getProperty(k)?.trim()?.takeIf { it.isNotEmpty() }
+        if (fromProps != null) return fromProps
     }
     return null
 }
 
-val configuredStorePath = propOrEnv("storeFile", "STORE_FILE", "KEYSTORE_FILE", "ANDROID_KEYSTORE_PATH")
+val configuredStorePath = propOrEnv(
+    "CM_KEYSTORE_PATH",
+    "STORE_FILE",
+    "KEYSTORE_FILE",
+    "ANDROID_KEYSTORE_PATH",
+    "storeFile"
+)
+
 val storeCandidates = buildList {
     if (configuredStorePath != null) {
+        val directFile = File(configuredStorePath)
+        if (directFile.isAbsolute) {
+            add(directFile)
+        }
         add(rootProject.file(configuredStorePath))
         add(project.file(configuredStorePath))
     }
@@ -87,10 +98,28 @@ val storeCandidates = buildList {
     add(project.file("release.keystore"))
     add(project.file("keystore.jks"))
 }
+
 val resolvedKeystoreFile = storeCandidates.firstOrNull { it.isFile && it.length() > 0L }
-val resolvedStorePassword = propOrEnv("storePassword", "STORE_PASSWORD", "KEYSTORE_PASSWORD", "ANDROID_KEYSTORE_PASSWORD")
-val resolvedKeyAlias = propOrEnv("keyAlias", "KEY_ALIAS", "ALIAS", "ANDROID_KEY_ALIAS")
-val resolvedKeyPassword = propOrEnv("keyPassword", "KEY_PASSWORD", "ANDROID_KEY_PASSWORD") ?: resolvedStorePassword
+val resolvedStorePassword = propOrEnv(
+    "CM_KEYSTORE_PASSWORD",
+    "STORE_PASSWORD",
+    "KEYSTORE_PASSWORD",
+    "ANDROID_KEYSTORE_PASSWORD",
+    "storePassword"
+)
+val resolvedKeyAlias = propOrEnv(
+    "CM_KEY_ALIAS",
+    "KEY_ALIAS",
+    "ALIAS",
+    "ANDROID_KEY_ALIAS",
+    "keyAlias"
+)
+val resolvedKeyPassword = propOrEnv(
+    "CM_KEY_PASSWORD",
+    "KEY_PASSWORD",
+    "ANDROID_KEY_PASSWORD",
+    "keyPassword"
+) ?: resolvedStorePassword
 
 android {
     namespace = "cz.mares.jenpockej"
