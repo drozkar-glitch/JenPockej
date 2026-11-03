@@ -4,84 +4,139 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 1. Zelenkavy LCD displej uprostred -->
-    <path
-        android:fillColor="#FFA5B392"
-        android:strokeColor="#FF232724"
-        android:strokeWidth="1.5"
-        android:pathData="M32,26 h44 a5,5 0 0 1 5,5 v44 a5,5 0 0 1 -5,5 h-44 a5,5 0 0 1 -5,-5 v-44 a5,5 0 0 1 5,-5 z" />
 
-    <!-- Horni napis "НУ, ПОГОДИ!" -->
+    <!-- Horni cerveny napis НУ, ПОГОДИ! (stylizovane bloky pismen) -->
     <path
-        android:fillColor="#FFB52B24"
-        android:pathData="M38,18 h4 v2 h-4 z M44,18 h3 v2 h-3 z M50,18 h3 v2 h-3 z M55,18 h3 v2 h-3 z M60,18 h4 v2 h-4 z M66,18 h4 v2 h-4 z" />
+        android:fillColor="#FFC42B23"
+        android:pathData="M37,16 h3 v4 h-3 z M42,16 h3 v4 h-3 z M48,16 h4 v4 h-4 z M54,16 h4 v4 h-4 z M60,16 h4 v4 h-4 z M66,16 h3 v4 h-3 z M71,16 h1.5 v4 h-1.5 z" />
 
-    <!-- Spodni napis "ЭЛЕКТРОНИКА ИМ" -->
+    <!-- Spodni cerny napis ЭЛЕКТРОНИКА ИМ 02 -->
     <path
         android:fillColor="#FF232724"
-        android:pathData="M34,81 h3 v1.5 h-3 z M38,81 h3 v1.5 h-3 z M43,81 h3 v1.5 h-3 z M48,81 h2 v1.5 h-2 z M52,81 h3 v1.5 h-3 z M57,81 h3 v1.5 h-3 z M62,81 h3 v1.5 h-3 z M67,81 h2 v1.5 h-2 z M71,81 h3 v1.5 h-3 z" />
+        android:pathData="M33,84 h32 v2.5 h-32 z M68,84 h7 v2.5 h-7 z" />
 
-    <!-- 2. Kruh s logem •ИМ vlevo nahore -->
+    <!-- Kulate logo •ИМ vlevo nahore -->
     <path
         android:strokeColor="#FF232724"
-        android:strokeWidth="0.8"
-        android:pathData="M24,20 A4,4 0 1,1 16,20 A4,4 0 1,1 24,20 Z" />
-    <path
-        android:fillColor="#FF232724"
-        android:pathData="M17.5,19 h4 v2 h-4 z M18.5,17 a1,1 0 1,1 -1.3,-0.5 Z" />
-
-    <!-- 3. Postava vlka s kosikem na LCD displeji -->
-    <!-- Telo, pruhovane triko a namornicka cepice -->
-    <path
-        android:fillColor="#FF161913"
-        android:pathData="M52,44 c-2,-2 -5,-3 -5,-6 L44,40 L45,34 c3,-1 6,-2 8,1 c1,-2 3,-3 5,-2 L59,38 L54,40 L56,48 Z" />
-    <path
-        android:fillColor="#FFF3F4EE"
-        android:pathData="M48,35 L50,33 L52,36 L49,38 Z M51,39 L54,37 L56,42 L53,44 Z" />
-    <!-- Spodní podreple nohavice a nohy -->
-    <path
-        android:fillColor="#FF161913"
-        android:pathData="M50,48 L44,55 L49,58 L54,48 Z" />
-    <path
-        android:fillColor="#FF161913"
-        android:pathData="M56,48 L62,54 L59,57 L54,48 Z" />
-
-    <!-- Kosik s vajickem v tlapce -->
-    <path
-        android:fillColor="#FF161913"
-        android:pathData="M36,50 h8 c1,3 0,5 -2,5 c-2,1 -4,1 -5,0 c-1,-1 -2,-3 -1,-5 z" />
-    <!-- Vajicko v kosiku -->
-    <path
-        android:strokeColor="#FF161913"
         android:strokeWidth="1.2"
-        android:fillColor="#FFF3F4EE"
-        android:pathData="M39,47 a2.5,2 0 1,1 4.5,0 a2.5,2 0 1,1 -4.5,0 z" />
+        android:pathData="M24,25 A5.5,5.5 0 1,1 13,25 A5.5,5.5 0 1,1 24,25 Z" />
+    <path
+        android:fillColor="#FF232724"
+        android:pathData="M15.5,23 h6 v4 h-6 z" />
 
-    <!-- Maly zajicek vyklanejici se z chaloupky -->
+    <!-- 3 stribrna ovalna tlacitka vpravo nahore -->
     <path
-        android:fillColor="#FF161913"
-        android:pathData="M34,31 c0,-2 2,-4 3,-2 c2,-3 4,-2 3,2 L35,36 H33 Z" />
+        android:fillColor="#FF96948C"
+        android:strokeColor="#FF4A4944"
+        android:strokeWidth="0.9"
+        android:pathData="M86,25 h7 a2,2 0 0 1 2,2 v0.5 a2,2 0 0 1 -2,2 h-7 a2,2 0 0 1 -2,-2 v-0.5 a2,2 0 0 1 2,-2 z" />
     <path
-        android:strokeColor="#FF8C6239"
+        android:fillColor="#FF96948C"
+        android:strokeColor="#FF4A4944"
+        android:strokeWidth="0.9"
+        android:pathData="M86,33 h7 a2,2 0 0 1 2,2 v0.5 a2,2 0 0 1 -2,2 h-7 a2,2 0 0 1 -2,-2 v-0.5 a2,2 0 0 1 2,-2 z" />
+    <path
+        android:fillColor="#FF96948C"
+        android:strokeColor="#FF4A4944"
+        android:strokeWidth="0.9"
+        android:pathData="M86,41 h7 a2,2 0 0 1 2,2 v0.5 a2,2 0 0 1 -2,2 h-7 a2,2 0 0 1 -2,-2 v-0.5 a2,2 0 0 1 2,-2 z" />
+
+    <!-- 4 CERVENA TLACITKA (2 vlevo, 2 vpravo) + 4 CERNE SIPKY -->
+    <!-- Sipka leva horni -->
+    <path android:fillColor="#FF232724" android:pathData="M18.5,45 L21.5,49 H15.5 Z" />
+    <!-- Leve horni cervene tlacitko -->
+    <path
+        android:fillColor="#FFD62828"
+        android:strokeColor="#FF524F48"
         android:strokeWidth="1.5"
-        android:pathData="M31,34 H35 V38" />
+        android:pathData="M23,55 A4.5,4.5 0 1,1 14,55 A4.5,4.5 0 1,1 23,55 Z" />
+    <!-- Leve dolni cervene tlacitko -->
+    <path
+        android:fillColor="#FFD62828"
+        android:strokeColor="#FF524F48"
+        android:strokeWidth="1.5"
+        android:pathData="M23,67 A4.5,4.5 0 1,1 14,67 A4.5,4.5 0 1,1 23,67 Z" />
+    <!-- Sipka leva dolni -->
+    <path android:fillColor="#FF232724" android:pathData="M18.5,77 L21.5,73 H15.5 Z" />
 
-    <!-- 4. Legendarni 4 cervena tlacitka v rozich -->
-    <!-- Horni levy -->
-    <path android:fillColor="#FFB52B24" android:pathData="M23,43 A4.2,4.2 0 1,1 14.6,43 A4.2,4.2 0 1,1 23,43 Z" />
-    <path android:strokeColor="#FF6E6C64" android:strokeWidth="0.8" android:pathData="M24,43 A5,5 0 1,1 14,43 A5,5 0 1,1 24,43 Z" />
-    <!-- Dolni levy -->
-    <path android:fillColor="#FFB52B24" android:pathData="M23,65 A4.2,4.2 0 1,1 14.6,65 A4.2,4.2 0 1,1 23,65 Z" />
-    <path android:strokeColor="#FF6E6C64" android:strokeWidth="0.8" android:pathData="M24,65 A5,5 0 1,1 14,65 A5,5 0 1,1 24,65 Z" />
-    <!-- Horni pravy -->
-    <path android:fillColor="#FFB52B24" android:pathData="M94,43 A4.2,4.2 0 1,1 85.6,43 A4.2,4.2 0 1,1 94,43 Z" />
-    <path android:strokeColor="#FF6E6C64" android:strokeWidth="0.8" android:pathData="M95,43 A5,5 0 1,1 85,43 A5,5 0 1,1 95,43 Z" />
-    <!-- Dolni pravy -->
-    <path android:fillColor="#FFB52B24" android:pathData="M94,65 A4.2,4.2 0 1,1 85.6,65 A4.2,4.2 0 1,1 94,65 Z" />
-    <path android:strokeColor="#FF6E6C64" android:strokeWidth="0.8" android:pathData="M95,65 A5,5 0 1,1 85,65 A5,5 0 1,1 95,65 Z" />
+    <!-- Sipka prava horni -->
+    <path android:fillColor="#FF232724" android:pathData="M89.5,45 L92.5,49 H86.5 Z" />
+    <!-- Prave horni cervene tlacitko -->
+    <path
+        android:fillColor="#FFD62828"
+        android:strokeColor="#FF524F48"
+        android:strokeWidth="1.5"
+        android:pathData="M94,55 A4.5,4.5 0 1,1 85,55 A4.5,4.5 0 1,1 94,55 Z" />
+    <!-- Prave dolni cervene tlacitko -->
+    <path
+        android:fillColor="#FFD62828"
+        android:strokeColor="#FF524F48"
+        android:strokeWidth="1.5"
+        android:pathData="M94,67 A4.5,4.5 0 1,1 85,67 A4.5,4.5 0 1,1 94,67 Z" />
+    <!-- Sipka prava dolni -->
+    <path android:fillColor="#FF232724" android:pathData="M89.5,77 L92.5,73 H86.5 Z" />
 
-    <!-- 5. Tri stribrna menu tlacitka nahoře vpravo s popiskem -->
-    <path android:fillColor="#FF8C8980" android:pathData="M83,16 H89 A1,1 0 0,1 90,17 V18 A1,1 0 0,1 89,19 H83 A1,1 0 0,1 82,18 V17 A1,1 0 0,1 83,16 Z" />
-    <path android:fillColor="#FF8C8980" android:pathData="M83,21 H89 A1,1 0 0,1 90,22 V23 A1,1 0 0,1 89,24 H83 A1,1 0 0,1 82,23 V22 A1,1 0 0,1 83,21 Z" />
-    <path android:fillColor="#FF8C8980" android:pathData="M83,26 H89 A1,1 0 0,1 90,27 V28 A1,1 0 0,1 89,29 H83 A1,1 0 0,1 82,28 V27 A1,1 0 0,1 83,26 Z" />
+    <!-- Hneda bidylka a zelen v pozadi displeje -->
+    <path
+        android:strokeColor="#FF8A5A32"
+        android:strokeWidth="2.2"
+        android:pathData="M31,42 L44,48 M77,50 L62,57 M31,60 L44,66" />
+    <path
+        android:fillColor="#FF4F662B"
+        android:pathData="M65,64 C65,58 76,58 76,65 L76,75 L64,75 Z" />
+
+    <!-- POSTAVA VLKA S NAMORNICKOU CAPKOU A PROUTENYM KOSIKEM -->
+    <!-- Namornicka bily vrsek cepice + cerny ksilt -->
+    <path
+        android:fillColor="#FFF5F7F2"
+        android:strokeColor="#FF1F2421"
+        android:strokeWidth="1.1"
+        android:pathData="M41,37 C41,31 53,30 55,35 L52,39 L42,39 Z" />
+    <path
+        android:fillColor="#FF1F2421"
+        android:pathData="M42,38 L56,37 L55,40 L42,40 Z" />
+
+    <!-- Hlava vlka, rozcuchana srst, ucho a dlouhy cumak -->
+    <path
+        android:fillColor="#FF545E56"
+        android:strokeColor="#FF1F2421"
+        android:strokeWidth="1.2"
+        android:pathData="M40,39 L36,43 L39,45 L35,49 L41,51 L41,54 L51,54 L52,50 C58,51 63,49 64,44 C64,41 59,41 54,41 L51,38 L44,38 L41,34 Z" />
+    <!-- Cerny nos a bile oci + zub -->
+    <path
+        android:fillColor="#FF141715"
+        android:pathData="M64,42 A2.4,2.8 0 1,1 59.5,42 A2.4,2.8 0 1,1 64,42 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M48,41 h3 v3.5 h-3 z M57,49 L58.5,52 L60,49 Z" />
+
+    <!-- Namornicky kabatek a limecek -->
+    <path
+        android:fillColor="#FF6B756D"
+        android:strokeColor="#FF1F2421"
+        android:strokeWidth="1.2"
+        android:pathData="M38,53 L51,53 L54,73 L36,73 Z" />
+    <path
+        android:fillColor="#FFF5F7F2"
+        android:strokeColor="#FF254B73"
+        android:strokeWidth="1.0"
+        android:pathData="M39,53 L46,61 L51,53 Z" />
+
+    <!-- Hnedy prouteny kosik s bilym vajickem vepredu -->
+    <path
+        android:fillColor="#FF9E622B"
+        android:strokeColor="#FF3B230E"
+        android:strokeWidth="1.3"
+        android:pathData="M46,61 L66,61 L63,75 C60,77 51,77 48,75 Z" />
+    <!-- Ucho kosiku -->
+    <path
+        android:strokeColor="#FF9E622B"
+        android:strokeWidth="2.2"
+        android:pathData="M52,61 C53,53 59,53 60,61" />
+    <!-- Bile vajicko v kosiku -->
+    <path
+        android:fillColor="#FFF7F4E8"
+        android:strokeColor="#FF3B230E"
+        android:strokeWidth="1.0"
+        android:pathData="M57,59 C59,56 63,57 63,61 L56,61 Z" />
 </vector>

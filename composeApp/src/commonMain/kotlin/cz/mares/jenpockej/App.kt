@@ -82,7 +82,7 @@ fun App() {
                 .padding(6.dp)
                 .background(metalPlateBrush, RoundedCornerShape(10.dp))
                 .border(2.dp, Color(0xFF969185), RoundedCornerShape(10.dp))
-                .padding(horizontal = 12.dp, vertical = 5.dp)
+                .padding(horizontal = 12.dp, vertical = 4.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -152,7 +152,7 @@ fun App() {
                     }
                 }
 
-                // STREDNI PANEL: Prerusovana cerna obruba bez obdelnikovych nalepek + zapusteny LCD
+                // STREDNI PANEL: Cista prerusovana cerna linka v ose napisu + zapusteny LCD
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -161,55 +161,59 @@ fun App() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
+                    val topHeaderH = 22.dp
+                    val botFooterH = 20.dp
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .padding(top = 1.dp)
                             .drawBehind {
-                                val padY = 9.dp.toPx()
+                                val topY = (topHeaderH / 2).toPx()
+                                val botY = size.height - (botFooterH / 2).toPx()
                                 val r = 14.dp.toPx()
                                 val d = r * 2f
                                 val left = 2.dp.toPx()
                                 val right = size.width - 2.dp.toPx()
-                                val top = padY
-                                val bottom = size.height - padY
 
-                                val topGapHalf = 92.dp.toPx()
-                                val botGapHalf = 114.dp.toPx()
+                                val topGapHalf = 86.dp.toPx()
+                                val botGapHalf = 108.dp.toPx()
                                 val cx = size.width * 0.5f
 
-                                // Leva polovina cerneho ramecku (od horniho napisu po spodni napis)
                                 val leftBracket = Path().apply {
-                                    moveTo(cx - topGapHalf, top)
-                                    lineTo(left + r, top)
-                                    arcTo(Rect(left, top, left + d, top + d), 270f, -90f, false)
-                                    lineTo(left, bottom - r)
-                                    arcTo(Rect(left, bottom - d, left + d, bottom), 180f, -90f, false)
-                                    lineTo(cx - botGapHalf, bottom)
+                                    moveTo(cx - topGapHalf, topY)
+                                    lineTo(left + r, topY)
+                                    arcTo(Rect(left, topY, left + d, topY + d), 270f, -90f, false)
+                                    lineTo(left, botY - r)
+                                    arcTo(Rect(left, botY - d, left + d, botY), 180f, -90f, false)
+                                    lineTo(cx - botGapHalf, botY)
                                 }
 
-                                // Prava polovina cerneho ramecku (od horniho napisu po spodni napis)
                                 val rightBracket = Path().apply {
-                                    moveTo(cx + topGapHalf, top)
-                                    lineTo(right - r, top)
-                                    arcTo(Rect(right - d, top, right, top + d), 270f, 90f, false)
-                                    lineTo(right, bottom - r)
-                                    arcTo(Rect(right - d, bottom - d, right, bottom), 0f, 90f, false)
-                                    lineTo(cx + botGapHalf, bottom)
+                                    moveTo(cx + topGapHalf, topY)
+                                    lineTo(right - r, topY)
+                                    arcTo(Rect(right - d, topY, right, topY + d), 270f, 90f, false)
+                                    lineTo(right, botY - r)
+                                    arcTo(Rect(right - d, botY - d, right, botY), 0f, 90f, false)
+                                    lineTo(cx + botGapHalf, botY)
                                 }
 
-                                val frameStroke = Stroke(width = 2.6.dp.toPx(), cap = StrokeCap.Round)
+                                val frameStroke = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
                                 drawPath(leftBracket, color = Color(0xFF232724), style = frameStroke)
                                 drawPath(rightBracket, color = Color(0xFF232724), style = frameStroke)
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        // Zapusteny kovovy prolis kolem LCD sklicka
+                        // Zapusteny kovovy prolis s cistym odstupem od horniho i spodniho napisu
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 10.dp, vertical = 17.dp)
+                                .padding(
+                                    start = 10.dp,
+                                    end = 10.dp,
+                                    top = topHeaderH,
+                                    bottom = botFooterH
+                                )
                                 .background(
                                     Brush.verticalGradient(
                                         listOf(
@@ -221,7 +225,7 @@ fun App() {
                                     RoundedCornerShape(8.dp)
                                 )
                                 .border(2.dp, Color(0xFF6B6962), RoundedCornerShape(8.dp))
-                                .padding(6.dp)
+                                .padding(5.dp)
                         ) {
                             JenPockejLcdScreen(
                                 snapshot = uiState,
@@ -236,25 +240,39 @@ fun App() {
                             )
                         }
 
-                        // Horni cerveny napis НУ, ПОГОДИ! primo na kovovem podkladu
-                        Text(
-                            text = "НУ , ПОГОДИ !",
-                            color = Color(0xFFB52B24),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.5.sp,
-                            modifier = Modifier.align(Alignment.TopCenter)
-                        )
+                        // Horni napis НУ, ПОГОДИ! vycentrovany presne do osy horni cerne linky
+                        Box(
+                            modifier = Modifier
+                                .height(topHeaderH)
+                                .align(Alignment.TopCenter),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "НУ , ПОГОДИ !",
+                                color = Color(0xFFB52B24),
+                                fontSize = 14.sp,
+                                lineHeight = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.4.sp
+                            )
+                        }
 
-                        // Spodni napis ЭЛЕКТРОНИКА ИМ 02 primo na kovovem podkladu
-                        Text(
-                            text = "ЭЛЕКТРОНИКА ИМ 02",
-                            color = Color(0xFF232724),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.2.sp,
-                            modifier = Modifier.align(Alignment.BottomCenter)
-                        )
+                        // Spodni napis ЭЛЕКТРОНИКА ИМ 02 vycentrovany presne do osy spodni cerne linky
+                        Box(
+                            modifier = Modifier
+                                .height(botFooterH)
+                                .align(Alignment.BottomCenter),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "ЭЛЕКТРОНИКА ИМ 02",
+                                color = Color(0xFF232724),
+                                fontSize = 12.sp,
+                                lineHeight = 12.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 1.2.sp
+                            )
+                        }
                     }
 
                     Row(
