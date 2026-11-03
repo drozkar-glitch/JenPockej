@@ -27,6 +27,7 @@ data class CrashAnimState(
 data class GameSnapshot(
     val mode: GameMode = GameMode.GAME_A,
     val isRunning: Boolean = false,
+    val isDemoMode: Boolean = true,
     val isGameOver: Boolean = false,
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
@@ -34,12 +35,13 @@ data class GameSnapshot(
     val highScoreA: Int = 0,
     val highScoreB: Int = 0,
     val wolfPosition: BasketPosition = BasketPosition.BOTTOM_LEFT,
-    val eggs: List<EggItem> = emptyList(),
-    val hareVisible: Boolean = false,
+    val eggs: List<EggItem> = listOf(EggItem(0, 1)),
+    val hareVisible: Boolean = true,
     val hareBellUp: Boolean = false,
     val penaltyHalfPoints: Int = 0,
     val crashAnim: CrashAnimState? = null,
-    val blinkPhase: Boolean = false
+    val blinkPhase: Boolean = false,
+    val celebrationTicks: Int = 0
 )
 
 class GameEngine(private val media: SoundPlayer) {
@@ -59,11 +61,18 @@ class GameEngine(private val media: SoundPlayer) {
         private set
 
     private var tickCounter = 0
-    private var hareTimer = 0
+    private var hareTimer = 8
     private var spawnCooldown = 0
     private var inactiveRampForGameA = 3
 
     fun moveWolf(target: BasketPosition) {
+        if (state.isDemoMode && !state.isRunning) {
+            state = state.copy(wolfPosition = target)
+            if (state.hapticsEnabled) {
+                media.vibrate(HapticType.MOVE)
+            }
+            return
+        }
         if (state.wolfPosition != target) {
             state = state.copy(wolfPosition = target)
             if (state.soundEnabled) {
@@ -101,13 +110,15 @@ class GameEngine(private val media: SoundPlayer) {
         state = state.copy(
             mode = mode,
             isRunning = true,
+            isDemoMode = false,
             isGameOver = false,
             score = 0,
             eggs = listOf(EggItem(ramp = 0, step = 0)),
             hareVisible = false,
             hareBellUp = false,
             penaltyHalfPoints = 0,
-            crashAnim = null
+            crashAnim = null,
+            celebrationTicks = 0
         )
         if (state.soundEnabled) {
             media.play(SoundEffect.BONUS)
@@ -118,14 +129,17 @@ class GameEngine(private val media: SoundPlayer) {
     }
 
     fun resetToDemo() {
+        tickCounter = 0
         state = state.copy(
             isRunning = false,
+            isDemoMode = true,
             isGameOver = false,
             score = 0,
-            eggs = emptyList(),
-            hareVisible = false,
+            eggs = listOf(EggItem(ramp = 0, step = 0)),
+            hareVisible = true,
             penaltyHalfPoints = 0,
-            crashAnim = null
+            crashAnim = null,
+            celebrationTicks = 0
         )
         if (state.soundEnabled) {
             media.play(SoundEffect.BUTTON)
@@ -133,19 +147,26 @@ class GameEngine(private val media: SoundPlayer) {
     }
 
     fun currentTickDelayMs(): Long {
-        if (!state.isRunning || state.isGameOver) return 450L
+        if (state.isGameOver) return 450L
+        if (state.isDemoMode && !state.isRunning) return 580L
         if (state.crashAnim != null) return 260L
 
-        val baseDelay = if (state.mode == GameMode.GAME_A) 680L else 540L
-        val speedUp = ((state.score % 100) * 3L) + ((state.score / 100) * 45L)
-        return (baseDelay - speedUp).coerceIn(220L, 680L)
+        val baseDelay = if (state.mode == GameMode.GAME_A) 660L else 520L
+        val speedUp = ((state.score % 100) * 3L) + ((state.score / 100) * 42L)
+        return (baseDelay - speedUp).coerceIn(210L, 660L)
     }
 
     fun stepTick() {
         val nextBlink = !state.blinkPhase
 
-        if (!state.isRunning || state.isGameOver) {
+        if (state.isGameOver) {
             state = state.copy(blinkPhase = nextBlink)
+            return
+        }
+
+        // Automaticke DEMO (kdyz hrac jeste neodstartoval hru)
+        if (state.isDemoMode && !state.isRunning) {
+            stepDemoTick(nextBlink)
             return
         }
 
@@ -227,15 +248,21 @@ class GameEngine(private val media: SoundPlayer) {
         }
 
         val prevScore = state.score
-        val newScore = (prevScore + gainedPoints).coerceAtMost(999)
+        val rawNewScore = prevScore + gainedPoints
+        val reachedThousand = prevScore < 1000 && rawNewScore >= 1000
+        val newScore = rawNewScore.coerceAtMost(9999)
         var newPenalty = state.penaltyHalfPoints
         var bonusTriggered = false
 
-        if (gainedPoints > 0 && (newScore == 200 || newScore == 500)) {
-            if (newPenalty > 0) {
-                newPenalty = 0
-                bonusTriggered = true
-            }
+        if (gainedPoints > 0 && (newScore == 200 || newScore == 500 || reachedThousand)) {
+            newPenalty = 0
+            bonusTriggered = true
+        }
+
+        val nextCelebration = when {
+            reachedThousand -> 16
+            state.celebrationTicks > 0 -> state.celebrationTicks - 1
+            else -> 0
         }
 
         if (state.mode == GameMode.GAME_A && tickCounter % 18 == 0) {
@@ -288,7 +315,8 @@ class GameEngine(private val media: SoundPlayer) {
             hareVisible = hareNow,
             hareBellUp = if (hareNow) !state.hareBellUp else false,
             penaltyHalfPoints = newPenalty,
-            blinkPhase = nextBlink
+            blinkPhase = nextBlink,
+            celebrationTicks = nextCelebration
         )
 
         if (state.soundEnabled) {
@@ -313,5 +341,36 @@ class GameEngine(private val media: SoundPlayer) {
                 gainedPoints > 0 -> media.vibrate(HapticType.CATCH)
             }
         }
+    }
+
+    private fun stepDemoTick(nextBlink: Boolean) {
+        tickCounter++
+        val nextEggs = ArrayList<EggItem>()
+        for (egg in state.eggs) {
+            if (egg.step < 4) {
+                nextEggs.add(egg.copy(step = egg.step + 1))
+            }
+        }
+        if (nextEggs.size < 2 && tickCounter % 2 == 0) {
+            val ramp = Random.nextInt(4)
+            if (nextEggs.none { it.ramp == ramp && it.step <= 1 }) {
+                nextEggs.add(EggItem(ramp = ramp, step = 0))
+            }
+        }
+        val mostUrgentEgg = nextEggs.maxByOrNull { it.step }
+        val autoWolf = when (mostUrgentEgg?.ramp) {
+            0 -> BasketPosition.TOP_LEFT
+            1 -> BasketPosition.BOTTOM_LEFT
+            2 -> BasketPosition.TOP_RIGHT
+            3 -> BasketPosition.BOTTOM_RIGHT
+            else -> state.wolfPosition
+        }
+        state = state.copy(
+            wolfPosition = autoWolf,
+            eggs = nextEggs,
+            hareVisible = true,
+            hareBellUp = nextBlink,
+            blinkPhase = nextBlink
+        )
     }
 }

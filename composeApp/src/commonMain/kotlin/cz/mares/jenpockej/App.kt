@@ -8,14 +8,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -61,12 +64,17 @@ fun App() {
     MaterialTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = Color(0xFF232528)
+            color = Color(0xFF1A1C1E)
         ) {
+            // windowInsetsPadding(WindowInsets.safeDrawing) zajisti, ze nic nezasahuje do vyrezu kamery ani okraju
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .background(Color(0xFFD8DADF), RoundedCornerShape(20.dp))
+                    .border(3.dp, Color(0xFF8C1D1D), RoundedCornerShape(20.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -98,14 +106,15 @@ fun App() {
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .background(Color(0xFFD6D8DC), RoundedCornerShape(22.dp))
-                        .border(3.dp, Color(0xFF8C1D1D), RoundedCornerShape(22.dp))
-                        .padding(10.dp),
+                        .padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    // Leve ovladaci tlacitka konzole
                     Column(
-                        modifier = Modifier.fillMaxHeight(),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(76.dp),
                         verticalArrangement = Arrangement.SpaceEvenly,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -129,14 +138,15 @@ fun App() {
                         )
                     }
 
+                    // Stredovy LCD displej roztazeny na celou plochu ramecku
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .padding(horizontal = 10.dp)
-                            .background(Color(0xFF3A3E3B), RoundedCornerShape(16.dp))
-                            .border(3.dp, Color(0xFF8C1D1D), RoundedCornerShape(16.dp))
-                            .padding(8.dp),
+                            .padding(horizontal = 6.dp)
+                            .background(Color(0xFF323633), RoundedCornerShape(14.dp))
+                            .border(2.5.dp, Color(0xFF8C1D1D), RoundedCornerShape(14.dp))
+                            .padding(5.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         JenPockejLcdScreen(
@@ -145,40 +155,42 @@ fun App() {
                                 engine.moveWolf(target)
                                 uiState = engine.state
                             },
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .aspectRatio(1.45f, matchHeightConstraintsFirst = true)
+                            modifier = Modifier.fillMaxSize()
                         )
 
                         if (!uiState.isRunning) {
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
-                                    .padding(bottom = 6.dp)
-                                    .background(Color(0xCC1C2318), RoundedCornerShape(8.dp))
+                                    .padding(bottom = 4.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xD91C2318))
                                     .clickable {
                                         engine.startNewGame(uiState.mode)
                                         uiState = engine.state
                                     }
-                                    .padding(horizontal = 14.dp, vertical = 5.dp)
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
                             ) {
                                 val promptText = if (uiState.isGameOver) {
-                                    "KONEC HRY (${uiState.score} b.) • KLEPNI PRO NOVOU HRU"
+                                    "KONEC HRY (${uiState.score} b.) • KLEPNI PRO START"
                                 } else {
-                                    "KLEPNI ZDE NEBO NA 'HRA A / B' PRO START"
+                                    "DEMO REŽIM • KLEPNI PRO START HRY"
                                 }
                                 Text(
                                     text = promptText,
-                                    color = Color(0xFFDCE6CB),
-                                    fontSize = 11.sp,
+                                    color = Color(0xFFE4EDD5),
+                                    fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         }
                     }
 
+                    // Prave ovladaci tlacitka konzole
                     Column(
-                        modifier = Modifier.fillMaxHeight(),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(76.dp),
                         verticalArrangement = Arrangement.SpaceEvenly,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -203,24 +215,28 @@ fun App() {
                     }
                 }
 
+                // Spodni lista s rekordy a plnym copyrightem
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 6.dp),
+                        .padding(horizontal = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "REKORD A: ${uiState.highScoreA}  |  REKORD B: ${uiState.highScoreB}",
-                        color = Color(0xFFB8BDC4),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
+                        color = Color(0xFF2B2D30),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "© 2026 Created by Pavel Mareš",
-                        color = Color(0xFFD0D4DA),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
+                        color = Color(0xFF2B2D30),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
                     )
                 }
             }
@@ -240,26 +256,31 @@ private fun TopConsoleBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 6.dp),
+            .padding(horizontal = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "ЭЛЕКТРОНИКА ИМ-02 • JEN POČKEJ!",
-                color = Color(0xFFF2F4F7),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold
+                color = Color(0xFF8C1D1D),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
+            val statusLabel = if (snapshot.isRunning) snapshot.mode.label else "DEMO / ČAS"
             Text(
-                text = "Režim: ${snapshot.mode.label} • Vlk a Zajíček",
-                color = Color(0xFFA6ACB5),
-                fontSize = 11.sp
+                text = "Režim: $statusLabel • Ну, погоди!",
+                color = Color(0xFF3E4247),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
             )
         }
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             SmallSilverPillButton(
@@ -283,8 +304,8 @@ private fun TopConsoleBar(
                 onClick = onToggleHaptics
             )
             SmallSilverPillButton(
-                text = "RESET",
-                highlighted = false,
+                text = "DEMO",
+                highlighted = snapshot.isDemoMode && !snapshot.isRunning,
                 onClick = onReset
             )
         }
@@ -297,21 +318,21 @@ private fun SmallSilverPillButton(
     highlighted: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = if (highlighted) Color(0xFF9E2424) else Color(0xFF474B52)
-    val borderColor = if (highlighted) Color(0xFFFFB3B3) else Color(0xFF8C929C)
+    val bgColor = if (highlighted) Color(0xFF9E2424) else Color(0xFF42464D)
+    val borderColor = if (highlighted) Color(0xFFFFD166) else Color(0xFF7B818A)
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(bgColor)
             .border(1.5.dp, borderColor, RoundedCornerShape(50))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 5.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             color = Color.White,
-            fontSize = 11.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Bold
         )
     }
@@ -329,31 +350,32 @@ private fun RedArcadeButton(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(74.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(48.dp)
                 .clip(CircleShape)
                 .background(fill)
-                .border(3.dp, rim, CircleShape)
+                .border(2.5.dp, rim, CircleShape)
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = label,
                 color = Color.White,
-                fontSize = 22.sp,
+                fontSize = 19.sp,
                 fontWeight = FontWeight.ExtraBold
             )
         }
-        Spacer(modifier = Modifier.height(3.dp))
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = caption,
-            color = Color(0xFF2B2D30),
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            color = Color(0xFF222426),
+            fontSize = 8.sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
     }
 }
