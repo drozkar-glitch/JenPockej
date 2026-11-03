@@ -56,7 +56,7 @@ enum class ClassicGameId(
         titleCz = "Tajemství oceánu",
         titleRu = "Тайны океана",
         subtitle = "Potápěč, poklad a chobotnice",
-        isAvailable = false
+        isAvailable = true
     ),
     VESELY_KUCHAR(
         code = "ИМ-04",
@@ -92,6 +92,8 @@ enum class ClassicGameId(
 fun GameHubScreen(
     highScoreA: Int,
     highScoreB: Int,
+    oceanHighScoreA: Int = 0,
+    oceanHighScoreB: Int = 0,
     soundEnabled: Boolean,
     hapticsEnabled: Boolean,
     onToggleSound: () -> Unit,
@@ -112,6 +114,12 @@ fun GameHubScreen(
         )
     )
 
+    fun bestScoreFor(game: ClassicGameId): Int = when (game) {
+        ClassicGameId.JEN_POCKEJ -> maxOf(highScoreA, highScoreB)
+        ClassicGameId.TAJEMSTVI_OCEANU -> maxOf(oceanHighScoreA, oceanHighScoreB)
+        else -> 0
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -126,8 +134,8 @@ fun GameHubScreen(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             HubHeaderBar(
-                highScoreA = highScoreA,
-                highScoreB = highScoreB,
+                bestWolf = maxOf(highScoreA, highScoreB),
+                bestOcean = maxOf(oceanHighScoreA, oceanHighScoreB),
                 soundEnabled = soundEnabled,
                 hapticsEnabled = hapticsEnabled,
                 onToggleSound = onToggleSound,
@@ -151,8 +159,7 @@ fun GameHubScreen(
                     for (game in allGames.take(3)) {
                         GameCatalogCard(
                             game = game,
-                            highScoreA = highScoreA,
-                            highScoreB = highScoreB,
+                            bestScore = bestScoreFor(game),
                             onClick = {
                                 if (game.isAvailable) {
                                     onSelectGame(game)
@@ -174,8 +181,7 @@ fun GameHubScreen(
                     for (game in allGames.drop(3)) {
                         GameCatalogCard(
                             game = game,
-                            highScoreA = highScoreA,
-                            highScoreB = highScoreB,
+                            bestScore = bestScoreFor(game),
                             onClick = {
                                 if (game.isAvailable) {
                                     onSelectGame(game)
@@ -224,8 +230,8 @@ fun GameHubScreen(
 
 @Composable
 private fun HubHeaderBar(
-    highScoreA: Int,
-    highScoreB: Int,
+    bestWolf: Int,
+    bestOcean: Int,
     soundEnabled: Boolean,
     hapticsEnabled: Boolean,
     onToggleSound: () -> Unit,
@@ -306,7 +312,7 @@ private fun HubHeaderBar(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "REKORD A: $highScoreA | B: $highScoreB",
+                    text = "REKORD ИМ-02: $bestWolf  |  ИМ-03: $bestOcean",
                     color = Color(0xFF232724),
                     fontSize = 9.sp,
                     lineHeight = 10.sp,
@@ -363,8 +369,7 @@ private fun HubTogglePill(
 @Composable
 private fun GameCatalogCard(
     game: ClassicGameId,
-    highScoreA: Int,
-    highScoreB: Int,
+    bestScore: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -482,7 +487,7 @@ private fun GameCatalogCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "▶  HRÁT HRU   (REKORD: ${maxOf(highScoreA, highScoreB)})",
+                    text = "▶  HRÁT HRU   (REKORD: $bestScore)",
                     color = Color.White,
                     fontSize = 9.sp,
                     lineHeight = 10.sp,
@@ -524,8 +529,6 @@ private fun MiniConsoleGameIcon(
         val w = size.width
         val h = size.height
 
-        // Tenký kovový 3D rámeček s drobnými červenými hmatníky na bocích,
-        // aby 90 % plochy zabírala samotná barevná ilustrace hry
         drawRoundRect(
             color = Color(0xFF4A4D47),
             size = size,
@@ -543,7 +546,6 @@ private fun MiniConsoleGameIcon(
         val sw = w * 0.84f
         val sh = h * 0.82f
 
-        // 4 jemné červené boční výstupky tlačítek na okraji rámečku
         val btnCol = if (game.isAvailable) Color(0xFFD62828) else Color(0xFF9E3A34)
         val br = w * 0.032f
         drawCircle(btnCol, radius = br, center = Offset(w * 0.045f, h * 0.34f))
@@ -551,7 +553,6 @@ private fun MiniConsoleGameIcon(
         drawCircle(btnCol, radius = br, center = Offset(w * 0.955f, h * 0.34f))
         drawCircle(btnCol, radius = br, center = Offset(w * 0.955f, h * 0.68f))
 
-        // Tmavý vnitřní lem displeje
         drawRoundRect(
             color = Color(0xFF3E423B),
             topLeft = Offset(sx - 1.5f, sy - 1.5f),
@@ -574,7 +575,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     val outline = Color(0xFF1C201B)
     val strokeW = sw * 0.026f
 
-    // Zelenkavé LCD pozadí
     drawRoundRect(
         color = Color(0xFFBDC7AD),
         topLeft = Offset(sx, sy),
@@ -582,7 +582,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
 
-    // Červená střecha kurníku a zelená tráva dole
     val roof = Path().apply {
         moveTo(sx + sw * 0.03f, sy + sh * 0.28f)
         lineTo(sx + sw * 0.16f, sy + sh * 0.08f)
@@ -590,11 +589,9 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     }
     drawPath(roof, color = Color(0xFFB52B24), style = Stroke(width = sw * 0.055f, cap = StrokeCap.Round, join = StrokeJoin.Round))
 
-    // Zelený keř vpravo dole
     drawCircle(Color(0xFF4F682C), radius = sw * 0.11f, center = Offset(sx + sw * 0.88f, sy + sh * 0.84f))
     drawCircle(Color(0xFF4F682C), radius = sw * 0.09f, center = Offset(sx + sw * 0.14f, sy + sh * 0.86f))
 
-    // Hnědé dřevěné bidýlko vlevo
     drawLine(
         color = Color(0xFF8C5828),
         start = Offset(sx + sw * 0.04f, sy + sh * 0.44f),
@@ -603,7 +600,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
         cap = StrokeCap.Round
     )
 
-    // Bílá slepice s červeným hřebínkem na bidýlku
     drawOval(
         color = Color(0xFFF7F6F0),
         topLeft = Offset(sx + sw * 0.05f, sy + sh * 0.26f),
@@ -611,7 +607,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     )
     drawCircle(Color(0xFFD62828), radius = sw * 0.03f, center = Offset(sx + sw * 0.15f, sy + sh * 0.25f))
 
-    // Kutálející se bílé vajíčko nad košíkem
     drawOval(
         color = Color(0xFFFFFDF7),
         topLeft = Offset(sx + sw * 0.27f, sy + sh * 0.41f),
@@ -624,7 +619,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
         style = Stroke(width = strokeW)
     )
 
-    // Trup vlka v námořnickém kabátku s bílomodrým límečkem
     val torso = Path().apply {
         moveTo(sx + sw * 0.58f, sy + sh * 0.52f)
         lineTo(sx + sw * 0.84f, sy + sh * 0.52f)
@@ -644,7 +638,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     drawPath(collar, color = Color(0xFFF5F7F2))
     drawPath(collar, color = Color(0xFF234B75), style = Stroke(width = sw * 0.02f))
 
-    // Hlava vlka: tmavě šedá srst, špičaté ucho a světlý čumák směřující doleva
     val wolfHead = Path().apply {
         moveTo(sx + sw * 0.62f, sy + sh * 0.26f)
         lineTo(sx + sw * 0.82f, sy + sh * 0.26f)
@@ -658,7 +651,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     drawPath(wolfHead, color = Color(0xFF49524B))
     drawPath(wolfHead, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
 
-    // Světlý čumák vlka s velkým černým nosem a vyceněným špičákem
     val snout = Path().apply {
         moveTo(sx + sw * 0.64f, sy + sh * 0.34f)
         lineTo(sx + sw * 0.42f, sy + sh * 0.33f)
@@ -673,7 +665,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     drawPath(snout, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
     drawCircle(color = outline, radius = sw * 0.045f, center = Offset(sx + sw * 0.43f, sy + sh * 0.33f))
 
-    // Bílé oko vlka se zorničkou
     drawOval(
         color = Color.White,
         topLeft = Offset(sx + sw * 0.59f, sy + sh * 0.28f),
@@ -681,7 +672,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     )
     drawCircle(color = outline, radius = sw * 0.022f, center = Offset(sx + sw * 0.62f, sy + sh * 0.34f))
 
-    // Bílá námořnická čapka s černým kšiltem nahoře na hlavě
     val cap = Path().apply {
         moveTo(sx + sw * 0.58f, sy + sh * 0.25f)
         cubicTo(
@@ -701,7 +691,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
         cap = StrokeCap.Round
     )
 
-    // Hnědý proutěný košík vepředu
     val basket = Path().apply {
         moveTo(sx + sw * 0.22f, sy + sh * 0.63f)
         lineTo(sx + sw * 0.58f, sy + sh * 0.63f)
@@ -717,7 +706,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
         end = Offset(sx + sw * 0.54f, sy + sh * 0.75f),
         strokeWidth = sw * 0.025f
     )
-    // Ucho košíku
     drawArc(
         color = Color(0xFF7A4619),
         startAngle = 190f,
@@ -733,7 +721,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
     val outline = Color(0xFF172226)
     val strokeW = sw * 0.025f
 
-    // Modrozelené mořské pozadí
     drawRoundRect(
         color = Color(0xFF9AC2BA),
         topLeft = Offset(sx, sy),
@@ -741,7 +728,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
 
-    // Světlý pruh oblohy nahoře a modrá vlnitá hladina
     drawRoundRect(
         color = Color(0xFFDCE8DF),
         topLeft = Offset(sx, sy),
@@ -756,7 +742,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         cap = StrokeCap.Round
     )
 
-    // Loďka potápěčů nahoře vlevo
     val boat = Path().apply {
         moveTo(sx + sw * 0.08f, sy + sh * 0.16f)
         lineTo(sx + sw * 0.36f, sy + sh * 0.16f)
@@ -767,7 +752,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
     drawPath(boat, color = Color(0xFFD9822B))
     drawPath(boat, color = outline, style = Stroke(width = sw * 0.02f))
 
-    // Zlatá truhla s pokladem vlevo dole
     drawRoundRect(
         color = Color(0xFF7D481B),
         topLeft = Offset(sx + sw * 0.08f, sy + sh * 0.72f),
@@ -788,7 +772,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         style = Stroke(width = strokeW)
     )
 
-    // Potápěč ve skafandru uprostřed vlevo
     drawCircle(Color(0xFFE09F24), radius = sw * 0.065f, center = Offset(sx + sw * 0.24f, sy + sh * 0.44f))
     drawCircle(outline, radius = sw * 0.065f, center = Offset(sx + sw * 0.24f, sy + sh * 0.44f), style = Stroke(width = sw * 0.02f))
     drawLine(
@@ -799,7 +782,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         cap = StrokeCap.Round
     )
 
-    // Velká červenofialová chobotnice vpravo s chapadly
     val octopusColor = Color(0xFFB8323C)
     val tentacleCoords = listOf(
         Triple(0.56f, 0.62f, 0.38f to 0.84f),
@@ -820,7 +802,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         drawPath(tPath, color = octopusColor, style = Stroke(width = sw * 0.048f, cap = StrokeCap.Round))
     }
 
-    // Hlava chobotnice
     drawOval(
         color = octopusColor,
         topLeft = Offset(sx + sw * 0.50f, sy + sh * 0.24f),
@@ -833,7 +814,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         style = Stroke(width = strokeW)
     )
 
-    // Velké oči chobotnice
     drawCircle(Color.White, radius = sw * 0.055f, center = Offset(sx + sw * 0.61f, sy + sh * 0.42f))
     drawCircle(Color.White, radius = sw * 0.055f, center = Offset(sx + sw * 0.73f, sy + sh * 0.42f))
     drawCircle(outline, radius = sw * 0.026f, center = Offset(sx + sw * 0.60f, sy + sh * 0.43f))
@@ -844,7 +824,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
     val outline = Color(0xFF211E1A)
     val strokeW = sw * 0.026f
 
-    // Světlé kuchyňské LCD pozadí
     drawRoundRect(
         color = Color(0xFFDAD8C5),
         topLeft = Offset(sx, sy),
@@ -852,7 +831,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
 
-    // Kuchyňská polička vlevo nahoře
     drawLine(
         color = Color(0xFF8C5828),
         start = Offset(sx + sw * 0.06f, sy + sh * 0.22f),
@@ -861,7 +839,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
         cap = StrokeCap.Round
     )
 
-    // Bílý kuchařský rondon s červeným šátkem a knoflíky
     val coat = Path().apply {
         moveTo(sx + sw * 0.56f, sy + sh * 0.58f)
         lineTo(sx + sw * 0.88f, sy + sh * 0.58f)
@@ -874,7 +851,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
     drawCircle(outline, radius = sw * 0.018f, center = Offset(sx + sw * 0.66f, sy + sh * 0.70f))
     drawCircle(outline, radius = sw * 0.018f, center = Offset(sx + sw * 0.66f, sy + sh * 0.82f))
 
-    // Červený kuchařský šátek u krku
     val scarf = Path().apply {
         moveTo(sx + sw * 0.60f, sy + sh * 0.56f)
         lineTo(sx + sw * 0.82f, sy + sh * 0.56f)
@@ -883,7 +859,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
     }
     drawPath(scarf, color = Color(0xFFD62828))
 
-    // Obličej kuchaře s veselým knírkem
     drawCircle(
         color = Color(0xFFF2C9A0),
         radius = sw * 0.13f,
@@ -897,7 +872,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
     )
     drawCircle(outline, radius = sw * 0.02f, center = Offset(sx + sw * 0.67f, sy + sh * 0.43f))
     drawCircle(Color(0xFFD96B52), radius = sw * 0.032f, center = Offset(sx + sw * 0.62f, sy + sh * 0.46f))
-    // Zakroucený knírek
     drawLine(
         color = outline,
         start = Offset(sx + sw * 0.58f, sy + sh * 0.50f),
@@ -906,7 +880,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
         cap = StrokeCap.Round
     )
 
-    // Nadýchaná bílá kuchařská čepice (3 obloučky)
     drawCircle(Color.White, radius = sw * 0.09f, center = Offset(sx + sw * 0.63f, sy + sh * 0.22f))
     drawCircle(Color.White, radius = sw * 0.10f, center = Offset(sx + sw * 0.73f, sy + sh * 0.18f))
     drawCircle(Color.White, radius = sw * 0.09f, center = Offset(sx + sw * 0.82f, sy + sh * 0.22f))
@@ -924,7 +897,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
         style = Stroke(width = strokeW)
     )
 
-    // Černá pánvička s dlouhou rukojetí
     drawLine(
         color = outline,
         start = Offset(sx + sw * 0.36f, sy + sh * 0.71f),
@@ -942,7 +914,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
     drawPath(pan, color = Color(0xFF2B2F2E))
     drawPath(pan, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
 
-    // Letící klobáska a řízek nad pánvičkou
     drawOval(
         color = Color(0xFFC43B2B),
         topLeft = Offset(sx + sw * 0.12f, sy + sh * 0.42f),
@@ -965,7 +936,6 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
     val outline = Color(0xFF171A21)
     val strokeW = sw * 0.025f
 
-    // Tmavší vesmírná obloha nahoře a šedozelené LCD uprostřed
     drawRoundRect(
         color = Color(0xFFA8B5B8),
         topLeft = Offset(sx, sy),
@@ -979,7 +949,6 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
 
-    // Planeta s prstencem a hvězdy na obloze
     drawCircle(Color(0xFFF2C14E), radius = sw * 0.065f, center = Offset(sx + sw * 0.78f, sy + sh * 0.17f))
     drawLine(
         color = Color(0xFFF7E3A1),
@@ -991,7 +960,6 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
     drawCircle(Color.White, radius = sw * 0.015f, center = Offset(sx + sw * 0.22f, sy + sh * 0.14f))
     drawCircle(Color.White, radius = sw * 0.015f, center = Offset(sx + sw * 0.45f, sy + sh * 0.11f))
 
-    // Žhnoucí červenooranžová láva dole
     drawRoundRect(
         color = Color(0xFFD93829),
         topLeft = Offset(sx + sw * 0.04f, sy + sh * 0.82f),
@@ -999,7 +967,6 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
         cornerRadius = CornerRadius(4f, 4f)
     )
 
-    // Skalní útesy vlevo a vpravo
     val leftCliff = Path().apply {
         moveTo(sx, sy + sh * 0.48f)
         lineTo(sx + sw * 0.22f, sy + sh * 0.48f)
@@ -1010,7 +977,6 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
     drawPath(leftCliff, color = Color(0xFF6E5A4F))
     drawPath(leftCliff, color = outline, style = Stroke(width = strokeW))
 
-    // Šestikolové lunární vozítko nesoucí most uprostřed
     drawRoundRect(
         color = Color(0xFF3B6E8C),
         topLeft = Offset(sx + sw * 0.28f, sy + sh * 0.64f),
@@ -1024,7 +990,6 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
         cornerRadius = CornerRadius(4f, 4f),
         style = Stroke(width = strokeW)
     )
-    // Mostní rampa nahoře na vozítku
     drawLine(
         color = outline,
         start = Offset(sx + sw * 0.24f, sy + sh * 0.55f),
@@ -1032,13 +997,11 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
         strokeWidth = sw * 0.045f,
         cap = StrokeCap.Round
     )
-    // 3 kola vozítka
     for (wx in listOf(0.35f, 0.51f, 0.67f)) {
         drawCircle(outline, radius = sw * 0.055f, center = Offset(sx + sw * wx, sy + sh * 0.82f))
         drawCircle(Color(0xFFD8D5CC), radius = sw * 0.022f, center = Offset(sx + sw * wx, sy + sh * 0.82f))
     }
 
-    // Kosmonaut v bílém skafandru se zlatým hledím
     drawCircle(Color.White, radius = sw * 0.085f, center = Offset(sx + sw * 0.50f, sy + sh * 0.27f))
     drawCircle(outline, radius = sw * 0.085f, center = Offset(sx + sw * 0.50f, sy + sh * 0.27f), style = Stroke(width = sw * 0.022f))
     drawOval(
@@ -1065,7 +1028,6 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
     val outline = Color(0xFF1A1E24)
     val strokeW = sw * 0.026f
 
-    // Světle modrobílá ledová plocha
     drawRoundRect(
         color = Color(0xFFD6E3E0),
         topLeft = Offset(sx, sy),
@@ -1073,7 +1035,6 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
 
-    // Modré brankoviště dole
     drawArc(
         color = Color(0xFF8AB4CC),
         startAngle = 180f,
@@ -1083,7 +1044,6 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
         size = Size(sw * 0.64f, sh * 0.40f)
     )
 
-    // Červená hokejová branka se síťkou
     val goalFrame = Path().apply {
         moveTo(sx + sw * 0.14f, sy + sh * 0.84f)
         lineTo(sx + sw * 0.14f, sy + sh * 0.20f)
@@ -1096,7 +1056,6 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
         style = Stroke(width = sw * 0.055f, cap = StrokeCap.Round, join = StrokeJoin.Round)
     )
 
-    // Brankář v červeném dresu a bílé masce
     val jersey = Path().apply {
         moveTo(sx + sw * 0.44f, sy + sh * 0.46f)
         lineTo(sx + sw * 0.76f, sy + sh * 0.46f)
@@ -1107,7 +1066,6 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
     drawPath(jersey, color = Color(0xFFD62828))
     drawPath(jersey, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
 
-    // Bílý pruh na dresu
     drawLine(
         color = Color.White,
         start = Offset(sx + sw * 0.43f, sy + sh * 0.68f),
@@ -1115,7 +1073,6 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
         strokeWidth = sw * 0.04f
     )
 
-    // Bílá brankářská maska s průzory
     drawOval(
         color = Color.White,
         topLeft = Offset(sx + sw * 0.50f, sy + sh * 0.24f),
@@ -1130,7 +1087,6 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
     drawCircle(outline, radius = sw * 0.018f, center = Offset(sx + sw * 0.56f, sy + sh * 0.34f))
     drawCircle(outline, radius = sw * 0.018f, center = Offset(sx + sw * 0.63f, sy + sh * 0.34f))
 
-    // Brankářská hokejka a vyrážečka
     val stick = Path().apply {
         moveTo(sx + sw * 0.48f, sy + sh * 0.56f)
         lineTo(sx + sw * 0.28f, sy + sh * 0.84f)
@@ -1147,7 +1103,6 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
         style = Stroke(width = sw * 0.02f, cap = StrokeCap.Round, join = StrokeJoin.Round)
     )
 
-    // Letící černý puk se stopou pohybu
     drawOval(
         color = outline,
         topLeft = Offset(sx + sw * 0.18f, sy + sh * 0.42f),
@@ -1166,7 +1121,6 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
     val outline = Color(0xFF181B18)
     val strokeW = sw * 0.025f
 
-    // Zelené travnaté okraje trati
     drawRoundRect(
         color = Color(0xFF6B8A47),
         topLeft = Offset(sx, sy),
@@ -1174,7 +1128,6 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
 
-    // Lichoběžník asfaltové závodní dráhy uprostřed
     val road = Path().apply {
         moveTo(sx + sw * 0.36f, sy + sh * 0.06f)
         lineTo(sx + sw * 0.64f, sy + sh * 0.06f)
@@ -1185,7 +1138,6 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
     drawPath(road, color = Color(0xFFC8CCC2))
     drawPath(road, color = outline, style = Stroke(width = strokeW))
 
-    // Červenobílé obrubníky / kužely po stranách dráhy
     drawLine(
         color = Color(0xFFD62828),
         start = Offset(sx + sw * 0.36f, sy + sh * 0.08f),
@@ -1201,7 +1153,6 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
         cap = StrokeCap.Round
     )
 
-    // Středová přerušovaná čára
     drawLine(
         color = Color(0xFFF5F7F2),
         start = Offset(sx + sw * 0.50f, sy + sh * 0.12f),
@@ -1210,7 +1161,6 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
         cap = StrokeCap.Round
     )
 
-    // Černá závodní kola formule (přední a zadní náprava)
     drawRoundRect(
         color = outline,
         topLeft = Offset(sx + sw * 0.27f, sy + sh * 0.42f),
@@ -1236,7 +1186,6 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
         cornerRadius = CornerRadius(3f, 3f)
     )
 
-    // Červený trup závodní formule
     val carBody = Path().apply {
         moveTo(sx + sw * 0.45f, sy + sh * 0.30f)
         lineTo(sx + sw * 0.55f, sy + sh * 0.30f)
@@ -1249,7 +1198,6 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
     drawPath(carBody, color = Color(0xFFD62828))
     drawPath(carBody, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
 
-    // Přední a zadní přítlačné křídlo + bílá přilba pilota v kokpitu
     drawRoundRect(
         color = Color(0xFFF5F7F2),
         topLeft = Offset(sx + sw * 0.34f, sy + sh * 0.28f),

@@ -48,8 +48,11 @@ import kotlinx.coroutines.delay
 @Composable
 fun App() {
     val soundPlayer = remember { SoundPlayer() }
-    val engine = remember { GameEngine(media = soundPlayer) }
-    var uiState by remember { mutableStateOf(engine.state) }
+    val wolfEngine = remember { GameEngine(media = soundPlayer) }
+    val oceanEngine = remember { OceanGameEngine(media = soundPlayer) }
+
+    var wolfUiState by remember { mutableStateOf(wolfEngine.state) }
+    var oceanUiState by remember { mutableStateOf(oceanEngine.state) }
     var activeGame by remember { mutableStateOf<ClassicGameId?>(null) }
 
     DisposableEffect(Unit) {
@@ -59,69 +62,164 @@ fun App() {
     }
 
     LaunchedEffect(activeGame) {
-        while (activeGame != null) {
-            delay(engine.currentTickDelayMs())
-            engine.stepTick()
-            uiState = engine.state
+        when (activeGame) {
+            ClassicGameId.JEN_POCKEJ -> {
+                while (activeGame == ClassicGameId.JEN_POCKEJ) {
+                    delay(wolfEngine.currentTickDelayMs())
+                    wolfEngine.stepTick()
+                    wolfUiState = wolfEngine.state
+                }
+            }
+            ClassicGameId.TAJEMSTVI_OCEANU -> {
+                while (activeGame == ClassicGameId.TAJEMSTVI_OCEANU) {
+                    delay(oceanEngine.currentTickDelayMs())
+                    oceanEngine.stepTick()
+                    oceanUiState = oceanEngine.state
+                }
+            }
+            else -> Unit
         }
     }
 
     MaterialTheme {
-        if (activeGame == null) {
-            GameHubScreen(
-                highScoreA = uiState.highScoreA,
-                highScoreB = uiState.highScoreB,
-                soundEnabled = uiState.soundEnabled,
-                hapticsEnabled = uiState.hapticsEnabled,
-                onToggleSound = {
-                    engine.toggleSound()
-                    uiState = engine.state
-                },
-                onToggleHaptics = {
-                    engine.toggleHaptics()
-                    uiState = engine.state
-                },
-                onSelectGame = { chosen ->
-                    if (chosen == ClassicGameId.JEN_POCKEJ) {
-                        engine.resetToDemo()
-                        uiState = engine.state
-                        activeGame = chosen
+        when (activeGame) {
+            null -> {
+                GameHubScreen(
+                    highScoreA = wolfUiState.highScoreA,
+                    highScoreB = wolfUiState.highScoreB,
+                    oceanHighScoreA = oceanUiState.highScoreA,
+                    oceanHighScoreB = oceanUiState.highScoreB,
+                    soundEnabled = wolfUiState.soundEnabled,
+                    hapticsEnabled = wolfUiState.hapticsEnabled,
+                    onToggleSound = {
+                        wolfEngine.toggleSound()
+                        oceanEngine.syncAudioSettings(
+                            sound = wolfEngine.state.soundEnabled,
+                            haptics = wolfEngine.state.hapticsEnabled
+                        )
+                        wolfUiState = wolfEngine.state
+                        oceanUiState = oceanEngine.state
+                    },
+                    onToggleHaptics = {
+                        wolfEngine.toggleHaptics()
+                        oceanEngine.syncAudioSettings(
+                            sound = wolfEngine.state.soundEnabled,
+                            haptics = wolfEngine.state.hapticsEnabled
+                        )
+                        wolfUiState = wolfEngine.state
+                        oceanUiState = oceanEngine.state
+                    },
+                    onSelectGame = { chosen ->
+                        when (chosen) {
+                            ClassicGameId.JEN_POCKEJ -> {
+                                wolfEngine.resetToDemo()
+                                wolfUiState = wolfEngine.state
+                                activeGame = chosen
+                            }
+                            ClassicGameId.TAJEMSTVI_OCEANU -> {
+                                oceanEngine.syncAudioSettings(
+                                    sound = wolfEngine.state.soundEnabled,
+                                    haptics = wolfEngine.state.hapticsEnabled
+                                )
+                                oceanEngine.resetToDemo()
+                                oceanUiState = oceanEngine.state
+                                activeGame = chosen
+                            }
+                            else -> Unit
+                        }
                     }
-                }
-            )
-        } else {
-            JenPockejConsoleBody(
-                uiState = uiState,
-                onBackToHub = {
-                    engine.resetToDemo()
-                    uiState = engine.state
-                    activeGame = null
-                },
-                onMoveWolf = { target ->
-                    engine.moveWolf(target)
-                    uiState = engine.state
-                },
-                onStartA = {
-                    engine.startNewGame(GameMode.GAME_A)
-                    uiState = engine.state
-                },
-                onStartB = {
-                    engine.startNewGame(GameMode.GAME_B)
-                    uiState = engine.state
-                },
-                onResetDemo = {
-                    engine.resetToDemo()
-                    uiState = engine.state
-                },
-                onToggleSound = {
-                    engine.toggleSound()
-                    uiState = engine.state
-                },
-                onToggleHaptics = {
-                    engine.toggleHaptics()
-                    uiState = engine.state
-                }
-            )
+                )
+            }
+
+            ClassicGameId.JEN_POCKEJ -> {
+                JenPockejConsoleBody(
+                    uiState = wolfUiState,
+                    onBackToHub = {
+                        wolfEngine.resetToDemo()
+                        wolfUiState = wolfEngine.state
+                        activeGame = null
+                    },
+                    onMoveWolf = { target ->
+                        wolfEngine.moveWolf(target)
+                        wolfUiState = wolfEngine.state
+                    },
+                    onStartA = {
+                        wolfEngine.startNewGame(GameMode.GAME_A)
+                        wolfUiState = wolfEngine.state
+                    },
+                    onStartB = {
+                        wolfEngine.startNewGame(GameMode.GAME_B)
+                        wolfUiState = wolfEngine.state
+                    },
+                    onResetDemo = {
+                        wolfEngine.resetToDemo()
+                        wolfUiState = wolfEngine.state
+                    },
+                    onToggleSound = {
+                        wolfEngine.toggleSound()
+                        oceanEngine.syncAudioSettings(
+                            sound = wolfEngine.state.soundEnabled,
+                            haptics = wolfEngine.state.hapticsEnabled
+                        )
+                        wolfUiState = wolfEngine.state
+                        oceanUiState = oceanEngine.state
+                    },
+                    onToggleHaptics = {
+                        wolfEngine.toggleHaptics()
+                        oceanEngine.syncAudioSettings(
+                            sound = wolfEngine.state.soundEnabled,
+                            haptics = wolfEngine.state.hapticsEnabled
+                        )
+                        wolfUiState = wolfEngine.state
+                        oceanUiState = oceanEngine.state
+                    }
+                )
+            }
+
+            ClassicGameId.TAJEMSTVI_OCEANU -> {
+                OceanConsoleBody(
+                    uiState = oceanUiState,
+                    onBackToHub = {
+                        oceanEngine.resetToDemo()
+                        oceanUiState = oceanEngine.state
+                        activeGame = null
+                    },
+                    onMoveLeftOrUp = {
+                        oceanEngine.moveLeftOrUp()
+                        oceanUiState = oceanEngine.state
+                    },
+                    onMoveRightOrGrab = {
+                        oceanEngine.moveRightOrGrabGold()
+                        oceanUiState = oceanEngine.state
+                    },
+                    onStartA = {
+                        oceanEngine.startNewGame(GameMode.GAME_A)
+                        oceanUiState = oceanEngine.state
+                    },
+                    onStartB = {
+                        oceanEngine.startNewGame(GameMode.GAME_B)
+                        oceanUiState = oceanEngine.state
+                    },
+                    onResetDemo = {
+                        oceanEngine.resetToDemo()
+                        oceanUiState = oceanEngine.state
+                    },
+                    onToggleSound = {
+                        oceanEngine.toggleSound()
+                        wolfEngine.toggleSound()
+                        oceanUiState = oceanEngine.state
+                        wolfUiState = wolfEngine.state
+                    },
+                    onToggleHaptics = {
+                        oceanEngine.toggleHaptics()
+                        wolfEngine.toggleHaptics()
+                        oceanUiState = oceanEngine.state
+                        wolfUiState = wolfEngine.state
+                    }
+                )
+            }
+
+            else -> Unit
         }
     }
 }
