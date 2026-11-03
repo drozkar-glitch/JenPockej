@@ -41,7 +41,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun App() {
     val soundPlayer = remember { SoundPlayer() }
-    val engine = remember { GameEngine(onSound = { soundPlayer.play(it) }) }
+    val engine = remember { GameEngine(media = soundPlayer) }
     var uiState by remember { mutableStateOf(engine.state) }
 
     DisposableEffect(Unit) {
@@ -70,7 +70,6 @@ fun App() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Horni kovovy stitek a ovladaci tlacitka konzole
                 TopConsoleBar(
                     snapshot = uiState,
                     onStartA = {
@@ -85,13 +84,16 @@ fun App() {
                         engine.toggleSound()
                         uiState = engine.state
                     },
+                    onToggleHaptics = {
+                        engine.toggleHaptics()
+                        uiState = engine.state
+                    },
                     onReset = {
                         engine.resetToDemo()
                         uiState = engine.state
                     }
                 )
 
-                // Hlavni telo kapesni hry s rohovymi tlacitky a LCD uprostred
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -102,7 +104,6 @@ fun App() {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Leve sloupce tlacitek (Horni levy + Dolni levy)
                     Column(
                         modifier = Modifier.fillMaxHeight(),
                         verticalArrangement = Arrangement.SpaceEvenly,
@@ -128,7 +129,6 @@ fun App() {
                         )
                     }
 
-                    // Stredovy ramecek s LCD obrazovkou
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -150,7 +150,6 @@ fun App() {
                                 .aspectRatio(1.45f, matchHeightConstraintsFirst = true)
                         )
 
-                        // Stavova informacni vrstva pred startem nebo po konci hry
                         if (!uiState.isRunning) {
                             Box(
                                 modifier = Modifier
@@ -178,7 +177,6 @@ fun App() {
                         }
                     }
 
-                    // Prave sloupce tlacitek (Horni pravy + Dolni pravy)
                     Column(
                         modifier = Modifier.fillMaxHeight(),
                         verticalArrangement = Arrangement.SpaceEvenly,
@@ -205,7 +203,6 @@ fun App() {
                     }
                 }
 
-                // Paticka s rekordy a autorskym copyrightem
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -237,6 +234,7 @@ private fun TopConsoleBar(
     onStartA: () -> Unit,
     onStartB: () -> Unit,
     onToggleSound: () -> Unit,
+    onToggleHaptics: () -> Unit,
     onReset: () -> Unit
 ) {
     Row(
@@ -278,6 +276,11 @@ private fun TopConsoleBar(
                 text = if (snapshot.soundEnabled) "ZVUK: ZAP" else "ZVUK: VYP",
                 highlighted = snapshot.soundEnabled,
                 onClick = onToggleSound
+            )
+            SmallSilverPillButton(
+                text = if (snapshot.hapticsEnabled) "VIBR: ZAP" else "VIBR: VYP",
+                highlighted = snapshot.hapticsEnabled,
+                onClick = onToggleHaptics
             )
             SmallSilverPillButton(
                 text = "RESET",

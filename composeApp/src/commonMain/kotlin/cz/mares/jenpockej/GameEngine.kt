@@ -29,6 +29,7 @@ data class GameSnapshot(
     val isRunning: Boolean = false,
     val isGameOver: Boolean = false,
     val soundEnabled: Boolean = true,
+    val hapticsEnabled: Boolean = true,
     val score: Int = 0,
     val highScoreA: Int = 0,
     val highScoreB: Int = 0,
@@ -41,8 +42,20 @@ data class GameSnapshot(
     val blinkPhase: Boolean = false
 )
 
-class GameEngine(private val onSound: (SoundEffect) -> Unit) {
-    var state = GameSnapshot()
+class GameEngine(private val media: SoundPlayer) {
+    companion object {
+        private const val KEY_HIGH_A = "high_score_a"
+        private const val KEY_HIGH_B = "high_score_b"
+        private const val KEY_SOUND = "sound_enabled"
+        private const val KEY_HAPTICS = "haptics_enabled"
+    }
+
+    var state = GameSnapshot(
+        soundEnabled = media.loadBool(KEY_SOUND, true),
+        hapticsEnabled = media.loadBool(KEY_HAPTICS, true),
+        highScoreA = media.loadInt(KEY_HIGH_A, 0),
+        highScoreB = media.loadInt(KEY_HIGH_B, 0)
+    )
         private set
 
     private var tickCounter = 0
@@ -54,7 +67,10 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
         if (state.wolfPosition != target) {
             state = state.copy(wolfPosition = target)
             if (state.soundEnabled) {
-                onSound(SoundEffect.BUTTON)
+                media.play(SoundEffect.BUTTON)
+            }
+            if (state.hapticsEnabled) {
+                media.vibrate(HapticType.MOVE)
             }
         }
     }
@@ -62,8 +78,18 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
     fun toggleSound() {
         val next = !state.soundEnabled
         state = state.copy(soundEnabled = next)
+        media.saveBool(KEY_SOUND, next)
         if (next) {
-            onSound(SoundEffect.BUTTON)
+            media.play(SoundEffect.BUTTON)
+        }
+    }
+
+    fun toggleHaptics() {
+        val next = !state.hapticsEnabled
+        state = state.copy(hapticsEnabled = next)
+        media.saveBool(KEY_HAPTICS, next)
+        if (next) {
+            media.vibrate(HapticType.MOVE)
         }
     }
 
@@ -84,7 +110,10 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
             crashAnim = null
         )
         if (state.soundEnabled) {
-            onSound(SoundEffect.BONUS)
+            media.play(SoundEffect.BONUS)
+        }
+        if (state.hapticsEnabled) {
+            media.vibrate(HapticType.CATCH)
         }
     }
 
@@ -99,7 +128,7 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
             crashAnim = null
         )
         if (state.soundEnabled) {
-            onSound(SoundEffect.BUTTON)
+            media.play(SoundEffect.BUTTON)
         }
     }
 
@@ -135,8 +164,13 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
                     isRunning = !nowGameOver,
                     blinkPhase = nextBlink
                 )
-                if (nowGameOver && state.soundEnabled) {
-                    onSound(SoundEffect.GAME_OVER)
+                if (nowGameOver) {
+                    if (state.soundEnabled) {
+                        media.play(SoundEffect.GAME_OVER)
+                    }
+                    if (state.hapticsEnabled) {
+                        media.vibrate(HapticType.GAME_OVER)
+                    }
                 }
             }
             return
@@ -144,7 +178,6 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
 
         tickCounter++
 
-        // Logika zajicka s rolnickou
         hareTimer--
         var hareNow = state.hareVisible
         if (hareTimer <= 0) {
@@ -156,7 +189,6 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
             }
         }
 
-        // Posun existujicich vajicek
         val updatedEggs = ArrayList<EggItem>()
         var gainedPoints = 0
         var droppedRamp: Int? = null
@@ -173,7 +205,6 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
             }
         }
 
-        // Pokud vajicko spadlo mimo kosik
         if (droppedRamp != null) {
             val penaltyAdd = if (hareNow) 1 else 2
             val newPenalty = (state.penaltyHalfPoints + penaltyAdd).coerceAtMost(6)
@@ -187,12 +218,14 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
                 blinkPhase = nextBlink
             )
             if (state.soundEnabled) {
-                onSound(SoundEffect.MISS)
+                media.play(SoundEffect.MISS)
+            }
+            if (state.hapticsEnabled) {
+                media.vibrate(HapticType.MISS)
             }
             return
         }
 
-        // Pricteni skore a kontrola bonusu na 200 a 500 bodech
         val prevScore = state.score
         val newScore = (prevScore + gainedPoints).coerceAtMost(999)
         var newPenalty = state.penaltyHalfPoints
@@ -205,12 +238,10 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
             }
         }
 
-        // Obcasna obmena neaktivni rampy ve Hre A
         if (state.mode == GameMode.GAME_A && tickCounter % 18 == 0) {
             inactiveRampForGameA = (inactiveRampForGameA + 1) % 4
         }
 
-        // Nasazeni noveho vajicka
         val maxSimultaneousEggs = when {
             state.mode == GameMode.GAME_A && newScore < 30 -> 2
             state.mode == GameMode.GAME_A && newScore < 100 -> 3
@@ -238,8 +269,16 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
             }
         }
 
-        val bestA = if (state.mode == GameMode.GAME_A && newScore > state.highScoreA) newScore else state.highScoreA
-        val bestB = if (state.mode == GameMode.GAME_B && newScore > state.highScoreB) newScore else state.highScoreB
+        var bestA = state.highScoreA
+        var bestB = state.highScoreB
+        if (state.mode == GameMode.GAME_A && newScore > bestA) {
+            bestA = newScore
+            media.saveInt(KEY_HIGH_A, bestA)
+        }
+        if (state.mode == GameMode.GAME_B && newScore > bestB) {
+            bestB = newScore
+            media.saveInt(KEY_HIGH_B, bestB)
+        }
 
         state = state.copy(
             score = newScore,
@@ -254,8 +293,8 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
 
         if (state.soundEnabled) {
             when {
-                bonusTriggered -> onSound(SoundEffect.BONUS)
-                gainedPoints > 0 -> onSound(SoundEffect.CATCH)
+                bonusTriggered -> media.play(SoundEffect.BONUS)
+                gainedPoints > 0 -> media.play(SoundEffect.CATCH)
                 updatedEggs.isNotEmpty() -> {
                     val soundEffect = when (tickCounter % 4) {
                         0 -> SoundEffect.TICK_RAMP_0
@@ -263,8 +302,15 @@ class GameEngine(private val onSound: (SoundEffect) -> Unit) {
                         2 -> SoundEffect.TICK_RAMP_2
                         else -> SoundEffect.TICK_RAMP_3
                     }
-                    onSound(soundEffect)
+                    media.play(SoundEffect)
                 }
+            }
+        }
+
+        if (state.hapticsEnabled) {
+            when {
+                bonusTriggered -> media.vibrate(HapticType.BONUS)
+                gainedPoints > 0 -> media.vibrate(HapticType.CATCH)
             }
         }
     }

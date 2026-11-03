@@ -15,6 +15,14 @@ enum class SoundEffect {
     BUTTON
 }
 
+enum class HapticType {
+    MOVE,
+    CATCH,
+    MISS,
+    BONUS,
+    GAME_OVER
+}
+
 data class ToneSegment(
     val frequencyHz: Int,
     val durationMs: Int
@@ -134,5 +142,10 @@ object RetroWaveFactory {
 
 expect class SoundPlayer() {
     fun play(effect: SoundEffect)
+    fun vibrate(type: HapticType)
+    fun loadInt(key: String, defaultVal: Int): Int
+    fun saveInt(key: String, value: Int)
+    fun loadBool(key: String, defaultVal: Boolean): Boolean
+    fun saveBool(key: String, value: Boolean)
     fun release()
 }
