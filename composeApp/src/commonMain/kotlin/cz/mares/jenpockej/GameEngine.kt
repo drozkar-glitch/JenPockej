@@ -302,7 +302,7 @@ class GameEngine(private val media: SoundPlayer) {
                         2 -> SoundEffect.TICK_RAMP_2
                         else -> SoundEffect.TICK_RAMP_3
                     }
-                    media.play(SoundEffect)
+                    media.play(soundEffect)
                 }
             }
         }
