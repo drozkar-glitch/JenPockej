@@ -800,95 +800,115 @@ private fun DrawScope.drawDeckReserveDiver(vp: LcdViewport, cx: Float, cy: Float
 
 private fun DrawScope.drawDetailedGiantOctopusHead(vp: LcdViewport, col: Color) {
     if (col == Color.Transparent) return
-    val outline = Stroke(width = vp.s(4.5f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-    // 1. Masivní vak hlavy (plášť) chobotnice posazený pod vodní hladinou (y = 152..278)
-    val mantle = Path().apply {
-        moveTo(vp.x(636f), vp.y(242f))
+    // 1. Organická silueta chobotnice podle originálu ИМ-03:
+    // šikmo klenutý vak hlavy (plášť) vpravo nahoře, zúžená část u očí a spodní límec,
+    // který přímo navazuje na kořeny všech 4 chapadel (646,256 | 696,274 | 758,280 | 828,272)
+    val octopusSilhouette = Path().apply {
+        moveTo(vp.x(636f), vp.y(258f))
+        // Levé nadočnicové vyklenutí
         cubicTo(
-            vp.x(612f), vp.y(182f),
-            vp.x(692f), vp.y(148f),
-            vp.x(796f), vp.y(152f)
+            vp.x(626f), vp.y(226f),
+            vp.x(646f), vp.y(196f),
+            vp.x(682f), vp.y(192f)
+        )
+        // Klenutý vak hlavy (plášť) stoupající šikmo doprava
+        cubicTo(
+            vp.x(718f), vp.y(148f),
+            vp.x(838f), vp.y(142f),
+            vp.x(906f), vp.y(172f)
+        )
+        // Zaoblený zadní konec vaku hlavy a přechod dolů ke kořenům chapadel
+        cubicTo(
+            vp.x(958f), vp.y(196f),
+            vp.x(944f), vp.y(256f),
+            vp.x(886f), vp.y(264f)
+        )
+        // Spodní lem plynule obepínající kořeny všech 4 chapadel
+        quadraticTo(vp.x(854f), vp.y(268f), vp.x(832f), vp.y(276f))
+        quadraticTo(vp.x(794f), vp.y(286f), vp.x(758f), vp.y(283f))
+        quadraticTo(vp.x(726f), vp.y(282f), vp.x(696f), vp.y(276f))
+        quadraticTo(vp.x(666f), vp.y(270f), vp.x(636f), vp.y(258f))
+        close()
+    }
+    drawPath(octopusSilhouette, color = col)
+
+    // 2. Vnitřní vybrání klenutého vaku hlavy (autentická LCD perokresba místo prázdné bubliny)
+    val mantleCutout = Path().apply {
+        moveTo(vp.x(714f), vp.y(190f))
+        cubicTo(
+            vp.x(742f), vp.y(156f),
+            vp.x(842f), vp.y(152f),
+            vp.x(894f), vp.y(180f)
         )
         cubicTo(
-            vp.x(894f), vp.y(156f),
-            vp.x(946f), vp.y(204f),
-            vp.x(906f), vp.y(256f)
+            vp.x(932f), vp.y(200f),
+            vp.x(920f), vp.y(242f),
+            vp.x(870f), vp.y(248f)
         )
         cubicTo(
-            vp.x(884f), vp.y(278f),
-            vp.x(830f), vp.y(284f),
-            vp.x(762f), vp.y(282f)
-        )
-        cubicTo(
-            vp.x(694f), vp.y(280f),
-            vp.x(650f), vp.y(268f),
-            vp.x(636f), vp.y(242f)
+            vp.x(836f), vp.y(220f),
+            vp.x(772f), vp.y(202f),
+            vp.x(714f), vp.y(190f)
         )
         close()
     }
-    drawPath(mantle, color = LcdBgColor)
-    drawPath(mantle, color = col, style = outline)
+    drawPath(mantleCutout, color = LcdBgColor)
 
-    // Horní stínovací žebra a skvrny na plášti chobotnice (autentická perokresba bez "škrabošky")
-    val dorsalShade = Path().apply {
-        moveTo(vp.x(666f), vp.y(194f))
-        cubicTo(
-            vp.x(710f), vp.y(160f),
-            vp.x(845f), vp.y(162f),
-            vp.x(892f), vp.y(204f)
-        )
-        cubicTo(
-            vp.x(840f), vp.y(178f),
-            vp.x(720f), vp.y(176f),
-            vp.x(666f), vp.y(194f)
-        )
-        close()
+    // Záhyby a skvrny uvnitř pláště chobotnice
+    val ridgeCurve = Path().apply {
+        moveTo(vp.x(746f), vp.y(176f))
+        quadraticTo(vp.x(824f), vp.y(164f), vp.x(884f), vp.y(196f))
     }
-    drawPath(dorsalShade, color = col)
-
-    drawOval(col, vp.pt(768f, 176f), Size(vp.x(38f), vp.y(16f)), style = Stroke(width = vp.s(3.2f)))
-    drawOval(col, vp.pt(830f, 192f), Size(vp.x(32f), vp.y(15f)), style = Stroke(width = vp.s(3.2f)))
-    drawArc(
+    drawPath(
+        path = ridgeCurve,
         color = col,
-        startAngle = 195f,
-        sweepAngle = 135f,
-        useCenter = false,
-        topLeft = vp.pt(670f, 198f),
-        size = Size(vp.x(66f), vp.y(34f)),
         style = Stroke(width = vp.s(3.8f), cap = StrokeCap.Round)
     )
-    drawArc(
-        color = col,
-        startAngle = 205f,
-        sweepAngle = 135f,
-        useCenter = false,
-        topLeft = vp.pt(738f, 198f),
-        size = Size(vp.x(66f), vp.y(34f)),
-        style = Stroke(width = vp.s(3.8f), cap = StrokeCap.Round)
-    )
+    drawOval(col, vp.pt(808f, 182f), Size(vp.x(34f), vp.y(16f)), style = Stroke(width = vp.s(3.2f)))
+    drawOval(col, vp.pt(858f, 198f), Size(vp.x(28f), vp.y(14f)), style = Stroke(width = vp.s(3.2f)))
 
-    // Boční sifon (tryska) chobotnice vpravo
-    val siphon = Path().apply {
-        moveTo(vp.x(902f), vp.y(226f))
-        lineTo(vp.x(948f), vp.y(214f))
-        lineTo(vp.x(956f), vp.y(242f))
-        lineTo(vp.x(896f), vp.y(252f))
+    // 3. Dravé šikmé oči chobotnice se zamračeným nadočnicovým obloukem
+    val leftEyeSocket = Path().apply {
+        moveTo(vp.x(652f), vp.y(210f))
+        lineTo(vp.x(706f), vp.y(222f))
+        cubicTo(
+            vp.x(710f), vp.y(254f),
+            vp.x(650f), vp.y(254f),
+            vp.x(652f), vp.y(210f)
+        )
         close()
     }
-    drawPath(siphon, color = LcdBgColor)
-    drawPath(siphon, color = col, style = Stroke(width = vp.s(4.0f), join = StrokeJoin.Round))
+    val rightEyeSocket = Path().apply {
+        moveTo(vp.x(778f), vp.y(210f))
+        lineTo(vp.x(724f), vp.y(222f))
+        cubicTo(
+            vp.x(720f), vp.y(254f),
+            vp.x(780f), vp.y(254f),
+            vp.x(778f), vp.y(210f)
+        )
+        close()
+    }
+    drawPath(leftEyeSocket, color = LcdBgColor)
+    drawPath(rightEyeSocket, color = LcdBgColor)
 
-    // Velké oči chobotnice s nadočnicovým stínem
-    drawOval(LcdBgColor, vp.pt(680f, 212f), Size(vp.x(46f), vp.y(50f)))
-    drawOval(col, vp.pt(680f, 212f), Size(vp.x(46f), vp.y(50f)), style = outline)
-    drawCircle(col, radius = vp.s(10.5f), center = vp.pt(700f, 238f))
-    drawCircle(LcdBgColor, radius = vp.s(3.2f), center = vp.pt(697f, 234f))
+    // Zorničky s odleskem
+    drawCircle(col, radius = vp.s(9.5f), center = vp.pt(682f, 232f))
+    drawCircle(LcdBgColor, radius = vp.s(2.8f), center = vp.pt(679f, 229f))
 
-    drawOval(LcdBgColor, vp.pt(748f, 212f), Size(vp.x(46f), vp.y(50f)))
-    drawOval(col, vp.pt(748f, 212f), Size(vp.x(46f), vp.y(50f)), style = outline)
-    drawCircle(col, radius = vp.s(10.5f), center = vp.pt(768f, 238f))
-    drawCircle(LcdBgColor, radius = vp.s(3.2f), center = vp.pt(765f, 234f))
+    drawCircle(col, radius = vp.s(9.5f), center = vp.pt(748f, 232f))
+    drawCircle(LcdBgColor, radius = vp.s(2.8f), center = vp.pt(745f, 229f))
+
+    // Jemná světlá LCD linka oddělující hlavu od náběhu chapadel
+    val browCrease = Path().apply {
+        moveTo(vp.x(654f), vp.y(256f))
+        quadraticTo(vp.x(735f), vp.y(268f), vp.x(824f), vp.y(262f))
+    }
+    drawPath(
+        path = browCrease,
+        color = LcdBgColor,
+        style = Stroke(width = vp.s(2.6f), cap = StrokeCap.Round)
+    )
 }
 
 private data class TentacleCurvedSeg(
