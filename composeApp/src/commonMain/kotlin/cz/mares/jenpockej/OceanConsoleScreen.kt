@@ -582,7 +582,6 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
     drawCircle(OceanPrintGold, radius = vp.s(9f), center = vp.pt(225f, 92f), style = Stroke(width = vp.s(3f)))
 
     // Provazový žebřík spuštěný z lodi pod hladinu
-    drawLine(OceanPrintDarkWood, vp.pt(184f), vp.pt(184f), vp.s(1f))
     drawLine(OceanPrintDarkWood, vp.pt(184f, 144f), vp.pt(184f, 246f), vp.s(4.2f), StrokeCap.Round)
     drawLine(OceanPrintDarkWood, vp.pt(216f, 144f), vp.pt(216f, 246f), vp.s(4.2f), StrokeCap.Round)
     for (ry in listOf(160f, 178f, 196f, 214f, 232f)) {
