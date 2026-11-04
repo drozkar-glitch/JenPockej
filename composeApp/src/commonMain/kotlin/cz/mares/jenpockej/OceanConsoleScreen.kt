@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.sqrt
 
 private val OceanPrintBlue = Color(0xFF1E5B75)
 private val OceanPrintLightSky = Color(0xFFD8E2D5)
@@ -548,67 +549,67 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
     drawRect(
         color = OceanPrintLightSky,
         topLeft = Offset.Zero,
-        size = Size(vp.x(1000f), vp.y(144f))
+        size = Size(vp.x(1000f), vp.y(140f))
     )
 
-    // 2. Dřevěná potápěčská bárka na hladině vlevo nahoře (trup s prkny, příď, zábradlí a kotva)
+    // 2. Dřevěná potápěčská bárka na hladině vlevo nahoře (prodloužená, aby se posádka nepřekrývala)
     val hullOuter = Path().apply {
-        moveTo(vp.x(18f), vp.y(104f))
-        lineTo(vp.x(266f), vp.y(104f))
-        lineTo(vp.x(242f), vp.y(148f))
-        lineTo(vp.x(44f), vp.y(148f))
+        moveTo(vp.x(16f), vp.y(102f))
+        lineTo(vp.x(282f), vp.y(102f))
+        lineTo(vp.x(256f), vp.y(142f))
+        lineTo(vp.x(38f), vp.y(142f))
         close()
     }
     drawPath(hullOuter, color = OceanPrintBrown)
     drawPath(hullOuter, color = OceanPrintDarkWood, style = outlineStroke)
 
     // Palubní lišta a prkna obšití lodi
-    drawLine(OceanPrintGold, vp.pt(22f, 112f), vp.pt(262f, 112f), vp.s(4.2f), StrokeCap.Round)
-    drawLine(OceanPrintDarkWood, vp.pt(32f, 128f), vp.pt(252f, 128f), vp.s(2.4f), StrokeCap.Round)
+    drawLine(OceanPrintGold, vp.pt(20f, 109f), vp.pt(278f, 109f), vp.s(4.0f), StrokeCap.Round)
+    drawLine(OceanPrintDarkWood, vp.pt(30f, 124f), vp.pt(266f, 124f), vp.s(2.4f), StrokeCap.Round)
 
     // Kulatá okénka (lukny) na boku bárky
-    for (px in listOf(72f, 112f, 152f)) {
-        drawCircle(OceanPrintGoldBright, radius = vp.s(5.5f), center = vp.pt(px, 136f))
-        drawCircle(OceanPrintDarkWood, radius = vp.s(5.5f), center = vp.pt(px, 136f), style = Stroke(width = vp.s(2f)))
+    for (px in listOf(64f, 106f, 148f)) {
+        drawCircle(OceanPrintGoldBright, radius = vp.s(5.0f), center = vp.pt(px, 132f))
+        drawCircle(OceanPrintDarkWood, radius = vp.s(5.0f), center = vp.pt(px, 132f), style = Stroke(width = vp.s(1.8f)))
     }
 
-    // Naviják se vzduchovou pumpou na přídi lodi
+    // Naviják se vzduchovou pumpou posunutý na příď lodi vpravo od potápěče
     drawRoundRect(
         color = OceanPrintDarkWood,
-        topLeft = vp.pt(212f, 84f),
-        size = Size(vp.x(26f), vp.y(20f)),
+        topLeft = vp.pt(238f, 82f),
+        size = Size(vp.x(24f), vp.y(20f)),
         cornerRadius = CornerRadius(vp.s(3f), vp.s(3f))
     )
-    drawCircle(OceanPrintGold, radius = vp.s(9f), center = vp.pt(225f, 92f), style = Stroke(width = vp.s(3f)))
+    drawCircle(OceanPrintGold, radius = vp.s(8.5f), center = vp.pt(250f, 90f), style = Stroke(width = vp.s(2.8f)))
 
-    // Provazový žebřík spuštěný z lodi pod hladinu
-    drawLine(OceanPrintDarkWood, vp.pt(184f, 144f), vp.pt(184f, 246f), vp.s(4.2f), StrokeCap.Round)
-    drawLine(OceanPrintDarkWood, vp.pt(216f, 144f), vp.pt(216f, 246f), vp.s(4.2f), StrokeCap.Round)
-    for (ry in listOf(160f, 178f, 196f, 214f, 232f)) {
-        drawLine(OceanPrintBrown, vp.pt(184f, ry), vp.pt(216f, ry), vp.s(3.6f), StrokeCap.Round)
+    // Provazový žebřík spuštěný z lodi pod hladinu (prodloužený pro potápěče na pozici 1)
+    drawLine(OceanPrintDarkWood, vp.pt(186f, 140f), vp.pt(186f, 278f), vp.s(4.2f), StrokeCap.Round)
+    drawLine(OceanPrintDarkWood, vp.pt(218f, 140f), vp.pt(218f, 278f), vp.s(4.2f), StrokeCap.Round)
+    for (ry in listOf(158f, 178f, 198f, 218f, 238f, 258f, 274f)) {
+        drawLine(OceanPrintBrown, vp.pt(186f, ry), vp.pt(218f, ry), vp.s(3.4f), StrokeCap.Round)
     }
 
-    // 3. Vlnitá mořská hladina po celé šířce displeje
+    // 3. Vlnitá mořská hladina po celé šířce displeje (nad hlavou chobotnice)
     val wavePath = Path().apply {
-        moveTo(vp.x(6f), vp.y(146f))
+        moveTo(vp.x(6f), vp.y(140f))
         var x = 6f
         while (x < 984f) {
-            quadraticTo(vp.x(x + 18f), vp.y(134f), vp.x(x + 36f), vp.y(146f))
-            quadraticTo(vp.x(x + 54f), vp.y(156f), vp.x(x + 72f), vp.y(146f))
+            quadraticTo(vp.x(x + 18f), vp.y(130f), vp.x(x + 36f), vp.y(140f))
+            quadraticTo(vp.x(x + 54f), vp.y(150f), vp.x(x + 72f), vp.y(140f))
             x += 72f
         }
     }
-    drawPath(wavePath, color = OceanPrintBlue, style = Stroke(width = vp.s(4.8f), cap = StrokeCap.Round))
+    drawPath(wavePath, color = OceanPrintBlue, style = Stroke(width = vp.s(4.6f), cap = StrokeCap.Round))
 
     // 4. Skalní útes vlevo, červený rozvětvený korál a zelené mořské řasy
     val leftRock = Path().apply {
-        moveTo(vp.x(0f), vp.y(265f))
-        lineTo(vp.x(42f), vp.y(295f))
-        lineTo(vp.x(64f), vp.y(365f))
-        lineTo(vp.x(52f), vp.y(440f))
-        lineTo(vp.x(92f), vp.y(515f))
-        lineTo(vp.x(128f), vp.y(542f))
-        lineTo(vp.x(0f), vp.y(542f))
+        moveTo(vp.x(0f), vp.y(270f))
+        lineTo(vp.x(40f), vp.y(300f))
+        lineTo(vp.x(62f), vp.y(368f))
+        lineTo(vp.x(50f), vp.y(442f))
+        lineTo(vp.x(90f), vp.y(515f))
+        lineTo(vp.x(124f), vp.y(540f))
+        lineTo(vp.x(0f), vp.y(540f))
         close()
     }
     drawPath(leftRock, color = OceanPrintRock)
@@ -616,14 +617,14 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
 
     // Větvící se červený korál na útesu
     val coralBranch = Path().apply {
-        moveTo(vp.x(68f), vp.y(512f))
-        lineTo(vp.x(68f), vp.y(410f))
-        moveTo(vp.x(68f), vp.y(465f))
-        lineTo(vp.x(38f), vp.y(430f))
-        moveTo(vp.x(68f), vp.y(442f))
-        lineTo(vp.x(98f), vp.y(404f))
-        moveTo(vp.x(68f), vp.y(425f))
-        lineTo(vp.x(52f), vp.y(392f))
+        moveTo(vp.x(66f), vp.y(512f))
+        lineTo(vp.x(66f), vp.y(412f))
+        moveTo(vp.x(66f), vp.y(466f))
+        lineTo(vp.x(38f), vp.y(432f))
+        moveTo(vp.x(66f), vp.y(444f))
+        lineTo(vp.x(96f), vp.y(406f))
+        moveTo(vp.x(66f), vp.y(426f))
+        lineTo(vp.x(50f), vp.y(394f))
     }
     drawPath(
         path = coralBranch,
@@ -632,9 +633,9 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
     )
 
     // Zelené vlnité mořské řasy (chaluhy) u dna vlevo i vpravo
-    for (kx in listOf(118f, 142f, 164f, 962f, 982f)) {
+    for (kx in listOf(118f, 142f, 164f, 964f, 984f)) {
         val kelp = Path().apply {
-            moveTo(vp.x(kx), vp.y(540f))
+            moveTo(vp.x(kx), vp.y(538f))
             cubicTo(
                 vp.x(kx - 14f), vp.y(500f),
                 vp.x(kx + 14f), vp.y(462f),
@@ -649,7 +650,6 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
     }
 
     // 5. Otevřená dřevěná okovaná truhla plná zlatých mincí vpravo dole
-    // Zadní odklopené víko truhly
     val lidPath = Path().apply {
         moveTo(vp.x(812f), vp.y(458f))
         cubicTo(
@@ -662,7 +662,6 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
     drawPath(lidPath, color = OceanPrintDarkWood)
     drawPath(lidPath, color = OceanPrintGold, style = Stroke(width = vp.s(3.2f)))
 
-    // Hromada zlatých mincí a drahokamů v truhle
     for (mx in listOf(836f, 858f, 882f, 906f, 928f)) {
         drawCircle(OceanPrintGoldBright, radius = vp.s(13f), center = vp.pt(mx, 456f))
         drawCircle(OceanPrintDarkWood, radius = vp.s(13f), center = vp.pt(mx, 456f), style = Stroke(width = vp.s(1.8f)))
@@ -671,7 +670,6 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
         drawCircle(OceanPrintGold, radius = vp.s(11f), center = vp.pt(mx, 444f))
     }
 
-    // Spodní truhlík s kováním a zámkem
     val chestBox = Path().apply {
         moveTo(vp.x(808f), vp.y(462f))
         lineTo(vp.x(960f), vp.y(462f))
@@ -682,7 +680,6 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
     drawPath(chestBox, color = OceanPrintBrown)
     drawPath(chestBox, color = OceanPrintDarkWood, style = outlineStroke)
 
-    // Zlaté pásy kování a zámek truhly
     drawLine(OceanPrintGold, vp.pt(810f, 464f), vp.pt(958f, 464f), vp.s(5.5f), StrokeCap.Round)
     drawLine(OceanPrintGold, vp.pt(838f, 464f), vp.pt(842f, 536f), vp.s(5.5f))
     drawLine(OceanPrintGold, vp.pt(930f, 464f), vp.pt(926f, 536f), vp.s(5.5f))
@@ -694,15 +691,14 @@ private fun DrawScope.drawOceanPrintedBackdrop(vp: LcdViewport) {
     )
     drawCircle(OceanPrintDarkWood, radius = vp.s(3f), center = vp.pt(884f, 486f))
 
-    // 6. Členité mořské dno s kameny
+    // 6. Pevná linie mořského dna, na které stojí potápěči
     val seabed = Path().apply {
-        moveTo(vp.x(8f), vp.y(540f))
-        lineTo(vp.x(210f), vp.y(540f))
-        lineTo(vp.x(240f), vp.y(534f))
-        lineTo(vp.x(380f), vp.y(542f))
-        lineTo(vp.x(550f), vp.y(538f))
-        lineTo(vp.x(740f), vp.y(542f))
-        lineTo(vp.x(992f), vp.y(540f))
+        moveTo(vp.x(8f), vp.y(538f))
+        lineTo(vp.x(220f), vp.y(538f))
+        lineTo(vp.x(380f), vp.y(538f))
+        lineTo(vp.x(560f), vp.y(538f))
+        lineTo(vp.x(750f), vp.y(538f))
+        lineTo(vp.x(992f), vp.y(538f))
     }
     drawPath(seabed, color = OceanPrintTeal, style = Stroke(width = vp.s(6.5f), cap = StrokeCap.Round))
 }
@@ -741,13 +737,13 @@ private fun DrawScope.drawOceanLcdLayer(
         )
     }
 
-    // 2. Posádka náhradních potápěčů na palubě lodi (indikátor zbývajících životů)
+    // 2. Posádka náhradních potápěčů na zádi lodi (s dostatečným odstupem od potápěče s měšcem)
     val reserve1Lit = snapshot.lostDivers < 1
     val reserve2Lit = snapshot.lostDivers < 2
-    drawDeckReserveDiver(vp, cx = 74f, cy = 74f, col = segColor(reserve1Lit))
-    drawDeckReserveDiver(vp, cx = 128f, cy = 74f, col = segColor(reserve2Lit))
+    drawDeckReserveDiver(vp, cx = 52f, cy = 72f, col = segColor(reserve1Lit))
+    drawDeckReserveDiver(vp, cx = 96f, cy = 72f, col = segColor(reserve2Lit))
 
-    // 3. Detailní obří chobotnice vpravo nahoře + 4 zakřivená článkovaná chapadla s přísavkami
+    // 3. Detailní obří chobotnice pod vodní hladinou + 4 zvlněná chapadla s přísavkami
     drawDetailedGiantOctopusHead(vp, col = segColor(true))
     drawCurvedOctopusTentacles(vp, snapshot.tentacleLengths, ::segColor)
 
@@ -787,110 +783,112 @@ private fun DrawScope.drawDeckReserveDiver(vp: LcdViewport, cx: Float, cy: Float
     if (col == Color.Transparent) return
     val outline = Stroke(width = vp.s(3.2f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-    // Kulatá potápěčská přilba s průzorem
-    drawCircle(color = LcdBgColor, radius = vp.s(11f), center = vp.pt(cx, cy - 10f))
-    drawCircle(color = col, radius = vp.s(11f), center = vp.pt(cx, cy - 10f), style = outline)
-    drawCircle(color = col, radius = vp.s(4.5f), center = vp.pt(cx + 2f, cy - 10f))
+    drawCircle(color = LcdBgColor, radius = vp.s(10.5f), center = vp.pt(cx, cy - 10f))
+    drawCircle(color = col, radius = vp.s(10.5f), center = vp.pt(cx, cy - 10f), style = outline)
+    drawCircle(color = col, radius = vp.s(4.2f), center = vp.pt(cx + 2f, cy - 10f))
 
-    // Ramenní límec a trup potápěče v lodi
     val suitTorso = Path().apply {
-        moveTo(vp.x(cx - 14f), vp.y(cy + 2f))
-        lineTo(vp.x(cx + 14f), vp.y(cy + 2f))
-        lineTo(vp.x(cx + 12f), vp.y(cy + 28f))
-        lineTo(vp.x(cx - 12f), vp.y(cy + 28f))
+        moveTo(vp.x(cx - 13f), vp.y(cy + 2f))
+        lineTo(vp.x(cx + 13f), vp.y(cy + 2f))
+        lineTo(vp.x(cx + 11f), vp.y(cy + 28f))
+        lineTo(vp.x(cx - 11f), vp.y(cy + 28f))
         close()
     }
     drawPath(suitTorso, color = col)
-    drawLine(LcdBgColor, vp.pt(cx - 9f, cy + 12f), vp.pt(cx + 9f, cy + 12f), vp.s(2.4f), StrokeCap.Round)
+    drawLine(LcdBgColor, vp.pt(cx - 8f, cy + 12f), vp.pt(cx + 8f, cy + 12f), vp.s(2.4f), StrokeCap.Round)
 }
 
 private fun DrawScope.drawDetailedGiantOctopusHead(vp: LcdViewport, col: Color) {
     if (col == Color.Transparent) return
-    val outline = Stroke(width = vp.s(4.2f), cap = StrokeCap.Round, join = StrokeJoin.Round)
+    val outline = Stroke(width = vp.s(4.5f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-    // 1. Masivní vak hlavy (plášť) chobotnice podle originálního LCD IM-03
+    // 1. Masivní vak hlavy (plášť) chobotnice posazený pod vodní hladinou (y = 152..278)
     val mantle = Path().apply {
-        moveTo(vp.x(634f), vp.y(192f))
+        moveTo(vp.x(636f), vp.y(242f))
         cubicTo(
-            vp.x(606f), vp.y(112f),
-            vp.x(685f), vp.y(42f),
-            vp.x(795f), vp.y(48f)
+            vp.x(612f), vp.y(182f),
+            vp.x(692f), vp.y(148f),
+            vp.x(796f), vp.y(152f)
         )
         cubicTo(
-            vp.x(895f), vp.y(54f),
-            vp.x(946f), vp.y(132f),
-            vp.x(906f), vp.y(198f)
+            vp.x(894f), vp.y(156f),
+            vp.x(946f), vp.y(204f),
+            vp.x(906f), vp.y(256f)
         )
         cubicTo(
-            vp.x(886f), vp.y(232f),
-            vp.x(838f), vp.y(246f),
-            vp.x(764f), vp.y(246f)
+            vp.x(884f), vp.y(278f),
+            vp.x(830f), vp.y(284f),
+            vp.x(762f), vp.y(282f)
         )
         cubicTo(
-            vp.x(692f), vp.y(246f),
-            vp.x(646f), vp.y(224f),
-            vp.x(634f), vp.y(192f)
-        )
-        close()
-    }
-    drawPath(mantle, color = col)
-
-    // Vnitřní světlé vybrání hlavy s kresbou záhybů (aby hlava nebyla jen prázdný ovál ani jednolitý flek)
-    val innerCutout = Path().apply {
-        moveTo(vp.x(652f), vp.y(182f))
-        cubicTo(
-            vp.x(636f), vp.y(124f),
-            vp.x(700f), vp.y(66f),
-            vp.x(792f), vp.y(70f)
-        )
-        cubicTo(
-            vp.x(874f), vp.y(74f),
-            vp.x(914f), vp.y(136f),
-            vp.x(882f), vp.y(188f)
-        )
-        cubicTo(
-            vp.x(845f), vp.y(158f),
-            vp.x(705f), vp.y(156f),
-            vp.x(652f), vp.y(182f)
+            vp.x(694f), vp.y(280f),
+            vp.x(650f), vp.y(268f),
+            vp.x(636f), vp.y(242f)
         )
         close()
     }
-    drawPath(innerCutout, color = LcdBgColor)
+    drawPath(mantle, color = LcdBgColor)
+    drawPath(mantle, color = col, style = outline)
 
-    // Skvrny a vrásnění na hlavě chobotnice
-    drawOval(col, vp.pt(765f, 88f), Size(vp.x(38f), vp.y(18f)), style = Stroke(width = vp.s(3.2f)))
-    drawOval(col, vp.pt(825f, 108f), Size(vp.x(32f), vp.y(16f)), style = Stroke(width = vp.s(3.2f)))
+    // Horní stínovací žebra a skvrny na plášti chobotnice (autentická perokresba bez "škrabošky")
+    val dorsalShade = Path().apply {
+        moveTo(vp.x(666f), vp.y(194f))
+        cubicTo(
+            vp.x(710f), vp.y(160f),
+            vp.x(845f), vp.y(162f),
+            vp.x(892f), vp.y(204f)
+        )
+        cubicTo(
+            vp.x(840f), vp.y(178f),
+            vp.x(720f), vp.y(176f),
+            vp.x(666f), vp.y(194f)
+        )
+        close()
+    }
+    drawPath(dorsalShade, color = col)
+
+    drawOval(col, vp.pt(768f, 176f), Size(vp.x(38f), vp.y(16f)), style = Stroke(width = vp.s(3.2f)))
+    drawOval(col, vp.pt(830f, 192f), Size(vp.x(32f), vp.y(15f)), style = Stroke(width = vp.s(3.2f)))
     drawArc(
         color = col,
-        startAngle = 200f,
-        sweepAngle = 120f,
+        startAngle = 195f,
+        sweepAngle = 135f,
         useCenter = false,
-        topLeft = vp.pt(680f, 86f),
-        size = Size(vp.x(75f), vp.y(42f)),
-        style = Stroke(width = vp.s(3.5f), cap = StrokeCap.Round)
+        topLeft = vp.pt(670f, 198f),
+        size = Size(vp.x(66f), vp.y(34f)),
+        style = Stroke(width = vp.s(3.8f), cap = StrokeCap.Round)
+    )
+    drawArc(
+        color = col,
+        startAngle = 205f,
+        sweepAngle = 135f,
+        useCenter = false,
+        topLeft = vp.pt(738f, 198f),
+        size = Size(vp.x(66f), vp.y(34f)),
+        style = Stroke(width = vp.s(3.8f), cap = StrokeCap.Round)
     )
 
     // Boční sifon (tryska) chobotnice vpravo
     val siphon = Path().apply {
-        moveTo(vp.x(896f), vp.y(178f))
-        lineTo(vp.x(944f), vp.y(164f))
-        lineTo(vp.x(952f), vp.y(194f))
-        lineTo(vp.x(892f), vp.y(208f))
+        moveTo(vp.x(902f), vp.y(226f))
+        lineTo(vp.x(948f), vp.y(214f))
+        lineTo(vp.x(956f), vp.y(242f))
+        lineTo(vp.x(896f), vp.y(252f))
         close()
     }
     drawPath(siphon, color = LcdBgColor)
-    drawPath(siphon, color = col, style = outline)
+    drawPath(siphon, color = col, style = Stroke(width = vp.s(4.0f), join = StrokeJoin.Round))
 
-    // Výrazné nadočnicové oblouky a velké šelmovské oči chobotnice
-    drawOval(LcdBgColor, vp.pt(676f, 162f), Size(vp.x(46f), vp.y(52f)))
-    drawOval(col, vp.pt(676f, 162f), Size(vp.x(46f), vp.y(52f)), style = outline)
-    drawCircle(col, radius = vp.s(10f), center = vp.pt(696f, 190f))
-    drawCircle(LcdBgColor, radius = vp.s(3.2f), center = vp.pt(693f, 186f))
+    // Velké oči chobotnice s nadočnicovým stínem
+    drawOval(LcdBgColor, vp.pt(680f, 212f), Size(vp.x(46f), vp.y(50f)))
+    drawOval(col, vp.pt(680f, 212f), Size(vp.x(46f), vp.y(50f)), style = outline)
+    drawCircle(col, radius = vp.s(10.5f), center = vp.pt(700f, 238f))
+    drawCircle(LcdBgColor, radius = vp.s(3.2f), center = vp.pt(697f, 234f))
 
-    drawOval(LcdBgColor, vp.pt(744f, 162f), Size(vp.x(46f), vp.y(52f)))
-    drawOval(col, vp.pt(744f, 162f), Size(vp.x(46f), vp.y(52f)), style = outline)
-    drawCircle(col, radius = vp.s(10f), center = vp.pt(764f, 190f))
-    drawCircle(LcdBgColor, radius = vp.s(3.2f), center = vp.pt(761f, 186f))
+    drawOval(LcdBgColor, vp.pt(748f, 212f), Size(vp.x(46f), vp.y(50f)))
+    drawOval(col, vp.pt(748f, 212f), Size(vp.x(46f), vp.y(50f)), style = outline)
+    drawCircle(col, radius = vp.s(10.5f), center = vp.pt(768f, 238f))
+    drawCircle(LcdBgColor, radius = vp.s(3.2f), center = vp.pt(765f, 234f))
 }
 
 private data class TentacleCurvedSeg(
@@ -900,9 +898,7 @@ private data class TentacleCurvedSeg(
     val cy: Float,
     val x1: Float,
     val y1: Float,
-    val strokeW: Float,
-    val cup1: Offset,
-    val cup2: Offset
+    val strokeW: Float
 )
 
 private fun DrawScope.drawCurvedOctopusTentacles(
@@ -910,33 +906,33 @@ private fun DrawScope.drawCurvedOctopusTentacles(
     lengths: List<Int>,
     segColor: (Boolean) -> Color
 ) {
-    // 4 organicky prohnutá chapadla chobotnice s přísavkami
+    // 4 výrazně zvlněná chapadla chobotnice, jejichž poslední segment sahá těsně nad přilbu potápěče (y ~ 424..428)
     val tentacles = listOf(
-        // Chapadlo 0 (3 segmenty -> stáčí se doleva k pozici potápěče 2)
+        // Chapadlo 0 (3 segmenty -> vlní se k potápěči na pozici 2, x = 282)
         listOf(
-            TentacleCurvedSeg(646f, 214f, 578f, 226f, 522f, 260f, 15f, Offset(594f, 244f), Offset(552f, 262f)),
-            TentacleCurvedSeg(522f, 260f, 456f, 286f, 404f, 326f, 12f, Offset(476f, 304f), Offset(434f, 324f)),
-            TentacleCurvedSeg(404f, 326f, 344f, 352f, 304f, 396f, 9.5f, Offset(362f, 368f), Offset(326f, 390f))
+            TentacleCurvedSeg(646f, 256f, 556f, 232f, 502f, 298f, 15.5f),
+            TentacleCurvedSeg(502f, 298f, 452f, 362f, 382f, 354f, 12.5f),
+            TentacleCurvedSeg(382f, 354f, 312f, 348f, 288f, 424f, 9.8f)
         ),
-        // Chapadlo 1 (4 segmenty -> stáčí se k pozici potápěče 3)
+        // Chapadlo 1 (4 segmenty -> vlní se k potápěči na pozici 3, x = 424)
         listOf(
-            TentacleCurvedSeg(692f, 236f, 646f, 262f, 608f, 294f, 15f, Offset(662f, 276f), Offset(628f, 296f)),
-            TentacleCurvedSeg(608f, 294f, 566f, 322f, 530f, 356f, 12.5f, Offset(580f, 336f), Offset(550f, 358f)),
-            TentacleCurvedSeg(530f, 356f, 492f, 384f, 464f, 414f, 10.5f, Offset(506f, 396f), Offset(480f, 416f)),
-            TentacleCurvedSeg(464f, 414f, 442f, 434f, 434f, 458f, 8.5f, Offset(454f, 438f), Offset(444f, 454f))
+            TentacleCurvedSeg(696f, 274f, 636f, 268f, 608f, 312f, 15.0f),
+            TentacleCurvedSeg(608f, 312f, 580f, 356f, 532f, 350f, 12.8f),
+            TentacleCurvedSeg(532f, 350f, 484f, 344f, 464f, 388f, 10.8f),
+            TentacleCurvedSeg(464f, 388f, 446f, 424f, 426f, 428f, 9.0f)
         ),
-        // Chapadlo 2 (4 segmenty -> stáčí se k pozici potápěče 4)
+        // Chapadlo 2 (4 segmenty -> vlní se k potápěči na pozici 4, x = 570)
         listOf(
-            TentacleCurvedSeg(756f, 242f, 732f, 276f, 706f, 308f, 15f, Offset(742f, 284f), Offset(722f, 306f)),
-            TentacleCurvedSeg(706f, 308f, 678f, 340f, 652f, 372f, 12.5f, Offset(690f, 348f), Offset(670f, 370f)),
-            TentacleCurvedSeg(652f, 372f, 628f, 400f, 606f, 428f, 10.5f, Offset(640f, 404f), Offset(620f, 424f)),
-            TentacleCurvedSeg(606f, 428f, 588f, 444f, 582f, 464f, 8.5f, Offset(600f, 446f), Offset(592f, 460f))
+            TentacleCurvedSeg(758f, 280f, 738f, 318f, 700f, 322f, 15.0f),
+            TentacleCurvedSeg(700f, 322f, 660f, 326f, 648f, 364f, 12.8f),
+            TentacleCurvedSeg(648f, 364f, 636f, 402f, 602f, 398f, 10.8f),
+            TentacleCurvedSeg(602f, 398f, 578f, 396f, 574f, 428f, 9.0f)
         ),
-        // Chapadlo 3 (3 segmenty -> stáčí se k pozici potápěče 5 přímo před truhlou)
+        // Chapadlo 3 (3 segmenty -> vlní se k potápěči na pozici 5 před truhlou, x = 720)
         listOf(
-            TentacleCurvedSeg(828f, 236f, 816f, 284f, 796f, 326f, 15f, Offset(824f, 286f), Offset(810f, 316f)),
-            TentacleCurvedSeg(796f, 326f, 778f, 366f, 758f, 404f, 12f, Offset(788f, 368f), Offset(772f, 396f)),
-            TentacleCurvedSeg(758f, 404f, 742f, 430f, 738f, 456f, 9.5f, Offset(754f, 428f), Offset(748f, 448f))
+            TentacleCurvedSeg(828f, 272f, 832f, 322f, 790f, 334f, 15.5f),
+            TentacleCurvedSeg(790f, 334f, 748f, 346f, 760f, 386f, 12.5f),
+            TentacleCurvedSeg(760f, 386f, 770f, 420f, 728f, 426f, 9.8f)
         )
     )
 
@@ -962,11 +958,31 @@ private fun DrawScope.drawCurvedOctopusTentacles(
                 style = Stroke(width = vp.s(seg.strokeW), cap = StrokeCap.Round)
             )
 
-            // Přísavky na spodní straně každého článku chapadla
-            drawCircle(col, radius = vp.s(4.6f), center = vp.pt(seg.cup1.x, seg.cup1.y))
-            drawCircle(LcdBgColor, radius = vp.s(1.6f), center = vp.pt(seg.cup1.x, seg.cup1.y))
-            drawCircle(col, radius = vp.s(4.2f), center = vp.pt(seg.cup2.x, seg.cup2.y))
-            drawCircle(LcdBgColor, radius = vp.s(1.5f), center = vp.pt(seg.cup2.x, seg.cup2.y))
+            // Přísavky vypočtené přesně na spodní/vnější hraně kvadratické křivky chapadla
+            for (t in floatArrayOf(0.32f, 0.70f)) {
+                val inv = 1f - t
+                val bx = inv * inv * seg.x0 + 2f * inv * t * seg.cx + t * t * seg.x1
+                val by = inv * inv * seg.y0 + 2f * inv * t * seg.cy + t * t * seg.y1
+
+                // Tečna křivky B'(t) a kolmice směřující na spodní stranu chapadla
+                val tx = 2f * inv * (seg.cx - seg.x0) + 2f * t * (seg.x1 - seg.cx)
+                val ty = 2f * inv * (seg.cy - seg.y0) + 2f * t * (seg.y1 - seg.cy)
+                val len = sqrt(tx * tx + ty * ty).coerceAtLeast(1f)
+                // Jednotková normála otočená dolů/doprava
+                var nx = -ty / len
+                var ny = tx / len
+                if (ny < 0f) {
+                    nx = -nx
+                    ny = -ny
+                }
+
+                val offsetDist = seg.strokeW * 0.58f
+                val cupX = bx + nx * offsetDist
+                val cupY = by + ny * offsetDist
+
+                drawCircle(col, radius = vp.s(4.2f), center = vp.pt(cupX, cupY))
+                drawCircle(LcdBgColor, radius = vp.s(1.5f), center = vp.pt(cupX, cupY))
+            }
         }
     }
 }
@@ -978,14 +994,16 @@ private fun DrawScope.drawDetailedDiverAtPosition(
     bagCol: Color,
     reachCol: Color
 ) {
-    // Souřadnice 6 pozic potápěče (0 = loď, 1 = žebřík, 2..4 = dno, 5 = u truhly)
+    // Souřadnice 6 pozic potápěče:
+    // 0 = na palubě lodi (mimo posádku i naviják), 1 = na žebříku pod trupem lodi,
+    // 2..5 = olověnými botami pevně na mořském dně (y = 488 -> boty na 538)
     val coords = arrayOf(
-        Offset(176f, 68f),   // 0: Na palubě lodi u žebříku
-        Offset(200f, 206f),  // 1: Sestupuje po žebříku pod hladinou
-        Offset(278f, 468f),  // 2: Mořské dno vlevo
-        Offset(418f, 488f),  // 3: Mořské dno střed-vlevo
-        Offset(566f, 492f),  // 4: Mořské dno střed-vpravo
-        Offset(718f, 484f)   // 5: Mořské dno u otevřené truhly s pokladem
+        Offset(186f, 56f),   // 0: Na palubě lodi u žebříku
+        Offset(202f, 226f),  // 1: Sestupuje po žebříku pod trupem lodi
+        Offset(282f, 488f),  // 2: Mořské dno vlevo
+        Offset(424f, 488f),  // 3: Mořské dno střed-vlevo
+        Offset(570f, 488f),  // 4: Mořské dno střed-vpravo
+        Offset(720f, 488f)   // 5: Mořské dno u otevřené truhly s pokladem
     )
     val pt = coords[pos.coerceIn(0, 5)]
     val cx = pt.x
@@ -994,83 +1012,77 @@ private fun DrawScope.drawDetailedDiverAtPosition(
 
     // 1. Měšec se zlatem nesený potápěčem (s uvázaným hrdlem)
     if (bagCol != Color.Transparent) {
-        val bagX = cx - 34f
-        val bagY = cy - 4f
+        val bagX = cx - 32f
+        val bagY = cy - 2f
         drawOval(
             color = bagCol,
-            topLeft = vp.pt(bagX - 14f, bagY - 10f),
-            size = Size(vp.x(28f), vp.y(32f))
+            topLeft = vp.pt(bagX - 13f, bagY - 9f),
+            size = Size(vp.x(26f), vp.y(30f))
         )
-        // Hrdlo měšce
         val neck = Path().apply {
-            moveTo(vp.x(bagX - 6f), vp.y(bagY - 10f))
-            lineTo(vp.x(bagX - 11f), vp.y(bagY - 20f))
-            lineTo(vp.x(bagX + 11f), vp.y(bagY - 20f))
-            lineTo(vp.x(bagX + 6f), vp.y(bagY - 10f))
+            moveTo(vp.x(bagX - 5f), vp.y(bagY - 9f))
+            lineTo(vp.x(bagX - 10f), vp.y(bagY - 18f))
+            lineTo(vp.x(bagX + 10f), vp.y(bagY - 18f))
+            lineTo(vp.x(bagX + 5f), vp.y(bagY - 9f))
             close()
         }
         drawPath(neck, color = bagCol)
-        drawLine(LcdBgColor, vp.pt(bagX - 7f, bagY - 10f), vp.pt(bagX + 7f, bagY - 10f), vp.s(2.4f), StrokeCap.Round)
+        drawLine(LcdBgColor, vp.pt(bagX - 6f, bagY - 9f), vp.pt(bagX + 6f, bagY - 9f), vp.s(2.3f), StrokeCap.Round)
     }
 
     if (bodyCol != Color.Transparent) {
         // 2. Kulatá potápěčská přilba s průzorem a mřížkou
         val headY = cy - 28f
-        drawCircle(color = LcdBgColor, radius = vp.s(16f), center = vp.pt(cx, headY))
-        drawCircle(color = bodyCol, radius = vp.s(16f), center = vp.pt(cx, headY), style = outline)
-        // Kulaté okénko přilby s křížovou mřížkou
-        drawCircle(color = bodyCol, radius = vp.s(8.5f), center = vp.pt(cx + 4f, headY), style = Stroke(width = vp.s(2.8f)))
-        drawLine(bodyCol, vp.pt(cx - 4f, headY), vp.pt(cx + 12f, headY), vp.s(2.2f))
-        drawLine(bodyCol, vp.pt(cx + 4f, headY - 8f), vp.pt(cx + 4f, headY + 8f), vp.s(2.2f))
+        drawCircle(color = LcdBgColor, radius = vp.s(15.5f), center = vp.pt(cx, headY))
+        drawCircle(color = bodyCol, radius = vp.s(15.5f), center = vp.pt(cx, headY), style = outline)
+        drawCircle(color = bodyCol, radius = vp.s(8.2f), center = vp.pt(cx + 4f, headY), style = Stroke(width = vp.s(2.6f)))
+        drawLine(bodyCol, vp.pt(cx - 4f, headY), vp.pt(cx + 12f, headY), vp.s(2.1f))
+        drawLine(bodyCol, vp.pt(cx + 4f, headY - 8f), vp.pt(cx + 4f, headY + 8f), vp.s(2.1f))
 
         // Dýchací bublinky nad přilbou (pro potápěče pod vodou)
         if (pos >= 1) {
-            drawCircle(bodyCol, radius = vp.s(3.2f), center = vp.pt(cx - 12f, headY - 22f), style = Stroke(width = vp.s(2.2f)))
-            drawCircle(bodyCol, radius = vp.s(4.5f), center = vp.pt(cx - 6f, headY - 34f), style = Stroke(width = vp.s(2.2f)))
+            drawCircle(bodyCol, radius = vp.s(3.0f), center = vp.pt(cx - 13f, headY - 20f), style = Stroke(width = vp.s(2.0f)))
+            drawCircle(bodyCol, radius = vp.s(4.2f), center = vp.pt(cx - 7f, headY - 31f), style = Stroke(width = vp.s(2.0f)))
         }
 
         // 3. Trup potápěče ve skafandru s kovovým hrudním plátem
         val torso = Path().apply {
-            moveTo(vp.x(cx - 16f), vp.y(cy - 12f))
-            lineTo(vp.x(cx + 16f), vp.y(cy - 12f))
-            lineTo(vp.x(cx + 14f), vp.y(cy + 20f))
-            lineTo(vp.x(cx - 14f), vp.y(cy + 20f))
+            moveTo(vp.x(cx - 15f), vp.y(cy - 12f))
+            lineTo(vp.x(cx + 15f), vp.y(cy - 12f))
+            lineTo(vp.x(cx + 13f), vp.y(cy + 20f))
+            lineTo(vp.x(cx - 13f), vp.y(cy + 20f))
             close()
         }
         drawPath(torso, color = bodyCol)
-        // Světlý hrudní límec a opasek se závažím
         drawArc(
             color = LcdBgColor,
             startAngle = 15f,
             sweepAngle = 150f,
             useCenter = false,
-            topLeft = vp.pt(cx - 12f, cy - 16f),
-            size = Size(vp.x(24f), vp.y(14f)),
-            style = Stroke(width = vp.s(2.8f), cap = StrokeCap.Round)
+            topLeft = vp.pt(cx - 11f, cy - 16f),
+            size = Size(vp.x(22f), vp.y(13f)),
+            style = Stroke(width = vp.s(2.6f), cap = StrokeCap.Round)
         )
-        drawLine(LcdBgColor, vp.pt(cx - 13f, cy + 12f), vp.pt(cx + 13f, cy + 12f), vp.s(2.8f), StrokeCap.Round)
+        drawLine(LcdBgColor, vp.pt(cx - 12f, cy + 12f), vp.pt(cx + 12f, cy + 12f), vp.s(2.6f), StrokeCap.Round)
 
         // 4. Ruce potápěče
-        // Zadní ruka držící měšec / žebřík
-        drawLine(bodyCol, vp.pt(cx - 14f, cy - 6f), vp.pt(cx - 28f, cy + 4f), vp.s(7.0f), StrokeCap.Round)
-        // Přední ruka (pokud zrovna nenabírá zlato z truhly)
+        drawLine(bodyCol, vp.pt(cx - 14f, cy - 6f), vp.pt(cx - 26f, cy + 4f), vp.s(6.8f), StrokeCap.Round)
         if (pos != 5) {
-            val armEndY = if (pos == 1) cy - 18f else cy + 8f
-            drawLine(bodyCol, vp.pt(cx + 14f, cy - 6f), vp.pt(cx + 30f, armEndY), vp.s(7.0f), StrokeCap.Round)
+            val armEndX = if (pos == 0) cx + 24f else cx + 28f
+            val armEndY = if (pos == 1) cy - 16f else cy + 8f
+            drawLine(bodyCol, vp.pt(cx + 14f, cy - 6f), vp.pt(armEndX, armEndY), vp.s(6.8f), StrokeCap.Round)
         }
 
         // 5. Rozkročené nohy s těžkými olověnými potápěčskými botami
-        val stride = if (pos % 2 == 0) 14f else 9f
-        // Levá noha + bota
-        drawLine(bodyCol, vp.pt(cx - 7f, cy + 18f), vp.pt(cx - stride, cy + 44f), vp.s(8.0f), StrokeCap.Round)
+        val stride = if (pos % 2 == 0) 13f else 9f
+        drawLine(bodyCol, vp.pt(cx - 7f, cy + 18f), vp.pt(cx - stride, cy + 44f), vp.s(7.8f), StrokeCap.Round)
         drawRoundRect(
             color = bodyCol,
             topLeft = vp.pt(cx - stride - 10f, cy + 40f),
             size = Size(vp.x(20f), vp.y(10f)),
             cornerRadius = CornerRadius(vp.s(4f), vp.s(4f))
         )
-        // Pravá noha + bota
-        drawLine(bodyCol, vp.pt(cx + 7f, cy + 18f), vp.pt(cx + stride, cy + 44f), vp.s(8.0f), StrokeCap.Round)
+        drawLine(bodyCol, vp.pt(cx + 7f, cy + 18f), vp.pt(cx + stride, cy + 44f), vp.s(7.8f), StrokeCap.Round)
         drawRoundRect(
             color = bodyCol,
             topLeft = vp.pt(cx + stride - 6f, cy + 40f),
@@ -1082,17 +1094,16 @@ private fun DrawScope.drawDetailedDiverAtPosition(
     // 6. Ruka potápěče na pozici 5 (normální vs. natažená do otevřené truhly pro zlato)
     if (pos == 5) {
         if (bodyCol != Color.Transparent) {
-            drawLine(bodyCol, vp.pt(cx + 14f, cy - 4f), vp.pt(cx + 32f, cy + 10f), vp.s(6.5f), StrokeCap.Round)
+            drawLine(bodyCol, vp.pt(cx + 14f, cy - 4f), vp.pt(cx + 30f, cy + 10f), vp.s(6.5f), StrokeCap.Round)
         }
         if (reachCol != Color.Transparent) {
             drawLine(
                 color = reachCol,
                 start = vp.pt(cx + 14f, cy - 6f),
                 end = vp.pt(836f, 456f),
-                strokeWidth = vp.s(7.5f),
+                strokeWidth = vp.s(7.2f),
                 cap = StrokeCap.Round
             )
-            // Hrudka zlata v ruce nad truhlou
             drawCircle(reachCol, radius = vp.s(8.5f), center = vp.pt(842f, 454f))
         }
     }
@@ -1104,16 +1115,14 @@ private fun DrawScope.drawCaughtDiverInTentacles(
     wavePhase: Boolean
 ) {
     if (col == Color.Transparent) return
-    val cx = 536f
-    val cy = 222f
+    val cx = 524f
+    val cy = 236f
     val outline = Stroke(width = vp.s(3.6f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-    // Přilba zmítajícího se potápěče
     drawCircle(color = LcdBgColor, radius = vp.s(15f), center = vp.pt(cx, cy - 22f))
     drawCircle(color = col, radius = vp.s(15f), center = vp.pt(cx, cy - 22f), style = outline)
     drawCircle(color = col, radius = vp.s(6.5f), center = vp.pt(cx + 3f, cy - 22f))
 
-    // Trup sevřený chapadlem
     drawRoundRect(
         color = col,
         topLeft = vp.pt(cx - 15f, cy - 6f),
@@ -1122,7 +1131,6 @@ private fun DrawScope.drawCaughtDiverInTentacles(
     )
     drawLine(LcdBgColor, vp.pt(cx - 15f, cy + 8f), vp.pt(cx + 15f, cy + 12f), vp.s(4.0f), StrokeCap.Round)
 
-    // Máchající ruce a nohy
     val armY = if (wavePhase) cy - 24f else cy + 14f
     val legSpread = if (wavePhase) 22f else 8f
     drawLine(col, vp.pt(cx - 14f, cy), vp.pt(cx - 40f, armY), vp.s(6.5f), StrokeCap.Round)
