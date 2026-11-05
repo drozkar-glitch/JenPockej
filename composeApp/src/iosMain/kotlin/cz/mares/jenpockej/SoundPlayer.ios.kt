@@ -10,9 +10,21 @@ import platform.AVFAudio.AVAudioSessionCategoryAmbient
 import platform.AVFAudio.setActive
 import platform.AudioToolbox.AudioServicesPlaySystemSound
 import platform.Foundation.NSData
+import platform.Foundation.NSHTTPURLResponse
+import platform.Foundation.NSMutableURLRequest
+import platform.Foundation.NSString
+import platform.Foundation.NSURL
+import platform.Foundation.NSURLSession
+import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.create
+import platform.Foundation.dataTaskWithRequest
+import platform.Foundation.setHTTPBody
+import platform.Foundation.setHTTPMethod
+import platform.Foundation.setValue
 import platform.UIKit.UIImpactFeedbackGenerator
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual class SoundPlayer actual constructor() {
@@ -97,6 +109,67 @@ actual class SoundPlayer actual constructor() {
 
     actual fun saveBool(key: String, value: Boolean) {
         defaults.setBool(value, forKey = key)
+    }
+
+    actual fun loadString(key: String, defaultVal: String): String {
+        return defaults.stringForKey(key) ?: defaultVal
+    }
+
+    actual fun saveString(key: String, value: String) {
+        defaults.setObject(value, forKey = key)
+    }
+
+    actual fun httpGet(url: String, callback: (Boolean, String) -> Unit) {
+        val nsUrl = NSURL.URLWithString(url)
+        if (nsUrl == null) {
+            dispatch_async(dispatch_get_main_queue()) { callback(false, "") }
+            return
+        }
+        val request = NSMutableURLRequest(uRL = nsUrl).apply {
+            setHTTPMethod("GET")
+            setValue("application/json", forHTTPHeaderField = "Accept")
+        }
+        val task = NSURLSession.sharedSession.dataTaskWithRequest(request) { data, response, error ->
+            val statusCode = (response as? NSHTTPURLResponse)?.statusCode?.toInt() ?: 0
+            val text = if (data != null) {
+                NSString.create(data = data, encoding = NSUTF8StringEncoding)?.toString() ?: ""
+            } else {
+                ""
+            }
+            val ok = error == null && statusCode in 200..299
+            dispatch_async(dispatch_get_main_queue()) {
+                callback(ok, text)
+            }
+        }
+        task.resume()
+    }
+
+    actual fun httpPut(url: String, bodyJson: String, callback: (Boolean, Int, String) -> Unit) {
+        val nsUrl = NSURL.URLWithString(url)
+        if (nsUrl == null) {
+            dispatch_async(dispatch_get_main_queue()) { callback(false, 0, "") }
+            return
+        }
+        val bodyBytes = bodyJson.encodeToByteArray()
+        val request = NSMutableURLRequest(uRL = nsUrl).apply {
+            setHTTPMethod("PUT")
+            setValue("application/json; charset=utf-8", forHTTPHeaderField = "Content-Type")
+            setValue("application/json", forHTTPHeaderField = "Accept")
+            setHTTPBody(bodyBytes.toNsData())
+        }
+        val task = NSURLSession.sharedSession.dataTaskWithRequest(request) { data, response, error ->
+            val statusCode = (response as? NSHTTPURLResponse)?.statusCode?.toInt() ?: 0
+            val text = if (data != null) {
+                NSString.create(data = data, encoding = NSUTF8StringEncoding)?.toString() ?: ""
+            } else {
+                ""
+            }
+            val ok = error == null && statusCode in 200..299
+            dispatch_async(dispatch_get_main_queue()) {
+                callback(ok, statusCode, text)
+            }
+        }
+        task.resume()
     }
 
     actual fun release() {

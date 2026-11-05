@@ -63,7 +63,7 @@ enum class ClassicGameId(
         titleCz = "Veselý kuchař",
         titleRu = "Весёлый повар",
         subtitle = "Kuchař chytá jídlo na pánvičku",
-        isAvailable = false
+        isAvailable = true
     ),
     KOSMICKY_MOST(
         code = "ИМ-09",
@@ -94,10 +94,13 @@ fun GameHubScreen(
     highScoreB: Int,
     oceanHighScoreA: Int = 0,
     oceanHighScoreB: Int = 0,
+    chefHighScoreA: Int = 0,
+    chefHighScoreB: Int = 0,
     soundEnabled: Boolean,
     hapticsEnabled: Boolean,
     onToggleSound: () -> Unit,
     onToggleHaptics: () -> Unit,
+    onOpenLeaderboard: () -> Unit,
     onSelectGame: (ClassicGameId) -> Unit
 ) {
     val outerFrameBrush = Brush.verticalGradient(
@@ -117,6 +120,7 @@ fun GameHubScreen(
     fun bestScoreFor(game: ClassicGameId): Int = when (game) {
         ClassicGameId.JEN_POCKEJ -> maxOf(highScoreA, highScoreB)
         ClassicGameId.TAJEMSTVI_OCEANU -> maxOf(oceanHighScoreA, oceanHighScoreB)
+        ClassicGameId.VESELY_KUCHAR -> maxOf(chefHighScoreA, chefHighScoreB)
         else -> 0
     }
 
@@ -134,12 +138,11 @@ fun GameHubScreen(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             HubHeaderBar(
-                bestWolf = maxOf(highScoreA, highScoreB),
-                bestOcean = maxOf(oceanHighScoreA, oceanHighScoreB),
                 soundEnabled = soundEnabled,
                 hapticsEnabled = hapticsEnabled,
                 onToggleSound = onToggleSound,
-                onToggleHaptics = onToggleHaptics
+                onToggleHaptics = onToggleHaptics,
+                onOpenLeaderboard = onOpenLeaderboard
             )
 
             val allGames = ClassicGameId.entries
@@ -230,12 +233,11 @@ fun GameHubScreen(
 
 @Composable
 private fun HubHeaderBar(
-    bestWolf: Int,
-    bestOcean: Int,
     soundEnabled: Boolean,
     hapticsEnabled: Boolean,
     onToggleSound: () -> Unit,
-    onToggleHaptics: () -> Unit
+    onToggleHaptics: () -> Unit,
+    onOpenLeaderboard: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -305,18 +307,23 @@ private fun HubHeaderBar(
             Box(
                 modifier = Modifier
                     .height(28.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0xFFC6C2B7))
-                    .border(1.dp, Color(0xFF8C887D), RoundedCornerShape(6.dp))
-                    .padding(horizontal = 8.dp),
+                    .clip(RoundedCornerShape(50))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0xFFD62828), Color(0xFFB52B24))
+                        )
+                    )
+                    .border(1.5.dp, Color(0xFFFFD166), RoundedCornerShape(50))
+                    .clickable(onClick = onOpenLeaderboard)
+                    .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "REKORD ИМ-02: $bestWolf  |  ИМ-03: $bestOcean",
-                    color = Color(0xFF232724),
+                    text = "🏆 REKORDY (TOP 50)",
+                    color = Color.White,
                     fontSize = 9.sp,
                     lineHeight = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                     maxLines = 1,
                     softWrap = false
                 )

@@ -5,8 +5,14 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 object AndroidPlatformContext {
     var appContext: Context? = null
@@ -14,6 +20,7 @@ object AndroidPlatformContext {
 
 actual class SoundPlayer actual constructor() {
     private val pcmCache = HashMap<SoundEffect, ByteArray>()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     init {
         for (effect in SoundEffect.entries) {
@@ -128,6 +135,77 @@ actual class SoundPlayer actual constructor() {
             ?.getSharedPreferences("jen_pockej_prefs", Context.MODE_PRIVATE)
             ?: return
         prefs.edit().putBoolean(key, value).apply()
+    }
+
+    actual fun loadString(key: String, defaultVal: String): String {
+        val prefs = AndroidPlatformContext.appContext
+            ?.getSharedPreferences("jen_pockej_prefs", Context.MODE_PRIVATE)
+            ?: return defaultVal
+        return prefs.getString(key, defaultVal) ?: defaultVal
+    }
+
+    actual fun saveString(key: String, value: String) {
+        val prefs = AndroidPlatformContext.appContext
+            ?.getSharedPreferences("jen_pockej_prefs", Context.MODE_PRIVATE)
+            ?: return
+        prefs.edit().putString(key, value).apply()
+    }
+
+    actual fun httpGet(url: String, callback: (Boolean, String) -> Unit) {
+        Thread {
+            var conn: HttpURLConnection? = null
+            try {
+                conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 10000
+                    readTimeout = 10000
+                    setRequestProperty("Accept", "application/json")
+                }
+                val code = conn.responseCode
+                val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+                val text = stream?.let {
+                    BufferedReader(InputStreamReader(it, Charsets.UTF_8)).use { r -> r.readText() }
+                } ?: ""
+                val ok = code in 200..299
+                mainHandler.post { callback(ok, text) }
+            } catch (e: Throwable) {
+                mainHandler.post { callback(false, e.message ?: "") }
+            } finally {
+                conn?.disconnect()
+            }
+        }.start()
+    }
+
+    actual fun httpPut(url: String, bodyJson: String, callback: (Boolean, Int, String) -> Unit) {
+        Thread {
+            var conn: HttpURLConnection? = null
+            try {
+                conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "PUT"
+                    connectTimeout = 10000
+                    readTimeout = 10000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                    setRequestProperty("Accept", "application/json")
+                }
+                val payload = bodyJson.toByteArray(Charsets.UTF_8)
+                conn.outputStream.use { os ->
+                    os.write(payload)
+                    os.flush()
+                }
+                val code = conn.responseCode
+                val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+                val text = stream?.let {
+                    BufferedReader(InputStreamReader(it, Charsets.UTF_8)).use { r -> r.readText() }
+                } ?: ""
+                val ok = code in 200..299
+                mainHandler.post { callback(ok, code, text) }
+            } catch (e: Throwable) {
+                mainHandler.post { callback(false, 0, e.message ?: "") }
+            } finally {
+                conn?.disconnect()
+            }
+        }.start()
     }
 
     actual fun release() {

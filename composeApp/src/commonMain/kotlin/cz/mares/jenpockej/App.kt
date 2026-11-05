@@ -48,12 +48,17 @@ import kotlinx.coroutines.delay
 @Composable
 fun App() {
     val soundPlayer = remember { SoundPlayer() }
+    val onlineScoreManager = remember { OnlineScoreManager(media = soundPlayer) }
     val wolfEngine = remember { GameEngine(media = soundPlayer) }
     val oceanEngine = remember { OceanGameEngine(media = soundPlayer) }
+    val chefEngine = remember { ChefGameEngine(media = soundPlayer) }
 
     var wolfUiState by remember { mutableStateOf(wolfEngine.state) }
     var oceanUiState by remember { mutableStateOf(oceanEngine.state) }
+    var chefUiState by remember { mutableStateOf(chefEngine.state) }
+
     var activeGame by remember { mutableStateOf<ClassicGameId?>(null) }
+    var showLeaderboard by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -61,165 +66,257 @@ fun App() {
         }
     }
 
-    LaunchedEffect(activeGame) {
+    // Automatické odesílání překonaných osobních rekordů na pozadí do Firebase
+    LaunchedEffect(
+        wolfUiState.highScoreA,
+        wolfUiState.highScoreB,
+        oceanUiState.highScoreA,
+        oceanUiState.highScoreB,
+        chefUiState.highScoreA,
+        chefUiState.highScoreB
+    ) {
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.JEN_POCKEJ, GameMode.GAME_A, wolfUiState.highScoreA)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.JEN_POCKEJ, GameMode.GAME_B, wolfUiState.highScoreB)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.TAJEMSTVI_OCEANU, GameMode.GAME_A, oceanUiState.highScoreA)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.TAJEMSTVI_OCEANU, GameMode.GAME_B, oceanUiState.highScoreB)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_A, chefUiState.highScoreA)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_B, chefUiState.highScoreB)
+    }
+
+    LaunchedEffect(activeGame, showLeaderboard) {
+        if (showLeaderboard) return@LaunchedEffect
         when (activeGame) {
             ClassicGameId.JEN_POCKEJ -> {
-                while (activeGame == ClassicGameId.JEN_POCKEJ) {
+                while (activeGame == ClassicGameId.JEN_POCKEJ && !showLeaderboard) {
                     delay(wolfEngine.currentTickDelayMs())
                     wolfEngine.stepTick()
                     wolfUiState = wolfEngine.state
                 }
             }
             ClassicGameId.TAJEMSTVI_OCEANU -> {
-                while (activeGame == ClassicGameId.TAJEMSTVI_OCEANU) {
+                while (activeGame == ClassicGameId.TAJEMSTVI_OCEANU && !showLeaderboard) {
                     delay(oceanEngine.currentTickDelayMs())
                     oceanEngine.stepTick()
                     oceanUiState = oceanEngine.state
+                }
+            }
+            ClassicGameId.VESELY_KUCHAR -> {
+                while (activeGame == ClassicGameId.VESELY_KUCHAR && !showLeaderboard) {
+                    delay(chefEngine.currentTickDelayMs())
+                    chefEngine.stepTick()
+                    chefUiState = chefEngine.state
                 }
             }
             else -> Unit
         }
     }
 
+    fun syncAllAudio(sound: Boolean, haptics: Boolean) {
+        oceanEngine.syncAudioSettings(sound = sound, haptics = haptics)
+        chefEngine.syncAudioSettings(sound = sound, haptics = haptics)
+        wolfUiState = wolfEngine.state
+        oceanUiState = oceanEngine.state
+        chefUiState = chefEngine.state
+    }
+
     MaterialTheme {
-        when (activeGame) {
-            null -> {
-                GameHubScreen(
-                    highScoreA = wolfUiState.highScoreA,
-                    highScoreB = wolfUiState.highScoreB,
-                    oceanHighScoreA = oceanUiState.highScoreA,
-                    oceanHighScoreB = oceanUiState.highScoreB,
-                    soundEnabled = wolfUiState.soundEnabled,
-                    hapticsEnabled = wolfUiState.hapticsEnabled,
-                    onToggleSound = {
-                        wolfEngine.toggleSound()
-                        oceanEngine.syncAudioSettings(
-                            sound = wolfEngine.state.soundEnabled,
-                            haptics = wolfEngine.state.hapticsEnabled
-                        )
-                        wolfUiState = wolfEngine.state
-                        oceanUiState = oceanEngine.state
-                    },
-                    onToggleHaptics = {
-                        wolfEngine.toggleHaptics()
-                        oceanEngine.syncAudioSettings(
-                            sound = wolfEngine.state.soundEnabled,
-                            haptics = wolfEngine.state.hapticsEnabled
-                        )
-                        wolfUiState = wolfEngine.state
-                        oceanUiState = oceanEngine.state
-                    },
-                    onSelectGame = { chosen ->
-                        when (chosen) {
-                            ClassicGameId.JEN_POCKEJ -> {
-                                wolfEngine.resetToDemo()
-                                wolfUiState = wolfEngine.state
-                                activeGame = chosen
+        if (showLeaderboard) {
+            LeaderboardScreen(
+                scoreManager = onlineScoreManager,
+                initialGame = activeGame ?: ClassicGameId.JEN_POCKEJ,
+                initialMode = GameMode.GAME_A,
+                localBestProvider = { g, m ->
+                    when (g) {
+                        ClassicGameId.JEN_POCKEJ ->
+                            if (m == GameMode.GAME_A) wolfUiState.highScoreA else wolfUiState.highScoreB
+                        ClassicGameId.TAJEMSTVI_OCEANU ->
+                            if (m == GameMode.GAME_A) oceanUiState.highScoreA else oceanUiState.highScoreB
+                        ClassicGameId.VESELY_KUCHAR ->
+                            if (m == GameMode.GAME_A) chefUiState.highScoreA else chefUiState.highScoreB
+                        else -> 0
+                    }
+                },
+                allLocalScores = listOf(
+                    Triple(ClassicGameId.JEN_POCKEJ, GameMode.GAME_A, wolfUiState.highScoreA),
+                    Triple(ClassicGameId.JEN_POCKEJ, GameMode.GAME_B, wolfUiState.highScoreB),
+                    Triple(ClassicGameId.TAJEMSTVI_OCEANU, GameMode.GAME_A, oceanUiState.highScoreA),
+                    Triple(ClassicGameId.TAJEMSTVI_OCEANU, GameMode.GAME_B, oceanUiState.highScoreB),
+                    Triple(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_A, chefUiState.highScoreA),
+                    Triple(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_B, chefUiState.highScoreB)
+                ),
+                onBack = {
+                    showLeaderboard = false
+                }
+            )
+        } else {
+            when (activeGame) {
+                null -> {
+                    GameHubScreen(
+                        highScoreA = wolfUiState.highScoreA,
+                        highScoreB = wolfUiState.highScoreB,
+                        oceanHighScoreA = oceanUiState.highScoreA,
+                        oceanHighScoreB = oceanUiState.highScoreB,
+                        chefHighScoreA = chefUiState.highScoreA,
+                        chefHighScoreB = chefUiState.highScoreB,
+                        soundEnabled = wolfUiState.soundEnabled,
+                        hapticsEnabled = wolfUiState.hapticsEnabled,
+                        onToggleSound = {
+                            wolfEngine.toggleSound()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        },
+                        onToggleHaptics = {
+                            wolfEngine.toggleHaptics()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        },
+                        onOpenLeaderboard = {
+                            showLeaderboard = true
+                        },
+                        onSelectGame = { chosen ->
+                            when (chosen) {
+                                ClassicGameId.JEN_POCKEJ -> {
+                                    wolfEngine.resetToDemo()
+                                    wolfUiState = wolfEngine.state
+                                    activeGame = chosen
+                                }
+                                ClassicGameId.TAJEMSTVI_OCEANU -> {
+                                    oceanEngine.syncAudioSettings(
+                                        sound = wolfEngine.state.soundEnabled,
+                                        haptics = wolfEngine.state.hapticsEnabled
+                                    )
+                                    oceanEngine.resetToDemo()
+                                    oceanUiState = oceanEngine.state
+                                    activeGame = chosen
+                                }
+                                ClassicGameId.VESELY_KUCHAR -> {
+                                    chefEngine.syncAudioSettings(
+                                        sound = wolfEngine.state.soundEnabled,
+                                        haptics = wolfEngine.state.hapticsEnabled
+                                    )
+                                    chefEngine.resetToDemo()
+                                    chefUiState = chefEngine.state
+                                    activeGame = chosen
+                                }
+                                else -> Unit
                             }
-                            ClassicGameId.TAJEMSTVI_OCEANU -> {
-                                oceanEngine.syncAudioSettings(
-                                    sound = wolfEngine.state.soundEnabled,
-                                    haptics = wolfEngine.state.hapticsEnabled
-                                )
-                                oceanEngine.resetToDemo()
-                                oceanUiState = oceanEngine.state
-                                activeGame = chosen
-                            }
-                            else -> Unit
                         }
-                    }
-                )
-            }
+                    )
+                }
 
-            ClassicGameId.JEN_POCKEJ -> {
-                JenPockejConsoleBody(
-                    uiState = wolfUiState,
-                    onBackToHub = {
-                        wolfEngine.resetToDemo()
-                        wolfUiState = wolfEngine.state
-                        activeGame = null
-                    },
-                    onMoveWolf = { target ->
-                        wolfEngine.moveWolf(target)
-                        wolfUiState = wolfEngine.state
-                    },
-                    onStartA = {
-                        wolfEngine.startNewGame(GameMode.GAME_A)
-                        wolfUiState = wolfEngine.state
-                    },
-                    onStartB = {
-                        wolfEngine.startNewGame(GameMode.GAME_B)
-                        wolfUiState = wolfEngine.state
-                    },
-                    onResetDemo = {
-                        wolfEngine.resetToDemo()
-                        wolfUiState = wolfEngine.state
-                    },
-                    onToggleSound = {
-                        wolfEngine.toggleSound()
-                        oceanEngine.syncAudioSettings(
-                            sound = wolfEngine.state.soundEnabled,
-                            haptics = wolfEngine.state.hapticsEnabled
-                        )
-                        wolfUiState = wolfEngine.state
-                        oceanUiState = oceanEngine.state
-                    },
-                    onToggleHaptics = {
-                        wolfEngine.toggleHaptics()
-                        oceanEngine.syncAudioSettings(
-                            sound = wolfEngine.state.soundEnabled,
-                            haptics = wolfEngine.state.hapticsEnabled
-                        )
-                        wolfUiState = wolfEngine.state
-                        oceanUiState = oceanEngine.state
-                    }
-                )
-            }
+                ClassicGameId.JEN_POCKEJ -> {
+                    JenPockejConsoleBody(
+                        uiState = wolfUiState,
+                        onBackToHub = {
+                            wolfEngine.resetToDemo()
+                            wolfUiState = wolfEngine.state
+                            activeGame = null
+                        },
+                        onMoveWolf = { target ->
+                            wolfEngine.moveWolf(target)
+                            wolfUiState = wolfEngine.state
+                        },
+                        onStartA = {
+                            wolfEngine.startNewGame(GameMode.GAME_A)
+                            wolfUiState = wolfEngine.state
+                        },
+                        onStartB = {
+                            wolfEngine.startNewGame(GameMode.GAME_B)
+                            wolfUiState = wolfEngine.state
+                        },
+                        onResetDemo = {
+                            wolfEngine.resetToDemo()
+                            wolfUiState = wolfEngine.state
+                        },
+                        onToggleSound = {
+                            wolfEngine.toggleSound()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        },
+                        onToggleHaptics = {
+                            wolfEngine.toggleHaptics()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        }
+                    )
+                }
 
-            ClassicGameId.TAJEMSTVI_OCEANU -> {
-                OceanConsoleBody(
-                    uiState = oceanUiState,
-                    onBackToHub = {
-                        oceanEngine.resetToDemo()
-                        oceanUiState = oceanEngine.state
-                        activeGame = null
-                    },
-                    onMoveLeftOrUp = {
-                        oceanEngine.moveLeftOrUp()
-                        oceanUiState = oceanEngine.state
-                    },
-                    onMoveRightOrGrab = {
-                        oceanEngine.moveRightOrGrabGold()
-                        oceanUiState = oceanEngine.state
-                    },
-                    onStartA = {
-                        oceanEngine.startNewGame(GameMode.GAME_A)
-                        oceanUiState = oceanEngine.state
-                    },
-                    onStartB = {
-                        oceanEngine.startNewGame(GameMode.GAME_B)
-                        oceanUiState = oceanEngine.state
-                    },
-                    onResetDemo = {
-                        oceanEngine.resetToDemo()
-                        oceanUiState = oceanEngine.state
-                    },
-                    onToggleSound = {
-                        oceanEngine.toggleSound()
-                        wolfEngine.toggleSound()
-                        oceanUiState = oceanEngine.state
-                        wolfUiState = wolfEngine.state
-                    },
-                    onToggleHaptics = {
-                        oceanEngine.toggleHaptics()
-                        wolfEngine.toggleHaptics()
-                        oceanUiState = oceanEngine.state
-                        wolfUiState = wolfEngine.state
-                    }
-                )
-            }
+                ClassicGameId.TAJEMSTVI_OCEANU -> {
+                    OceanConsoleBody(
+                        uiState = oceanUiState,
+                        onBackToHub = {
+                            oceanEngine.resetToDemo()
+                            oceanUiState = oceanEngine.state
+                            activeGame = null
+                        },
+                        onMoveLeftOrUp = {
+                            oceanEngine.moveLeftOrUp()
+                            oceanUiState = oceanEngine.state
+                        },
+                        onMoveRightOrGrab = {
+                            oceanEngine.moveRightOrGrabGold()
+                            oceanUiState = oceanEngine.state
+                        },
+                        onStartA = {
+                            oceanEngine.startNewGame(GameMode.GAME_A)
+                            oceanUiState = oceanEngine.state
+                        },
+                        onStartB = {
+                            oceanEngine.startNewGame(GameMode.GAME_B)
+                            oceanUiState = oceanEngine.state
+                        },
+                        onResetDemo = {
+                            oceanEngine.resetToDemo()
+                            oceanUiState = oceanEngine.state
+                        },
+                        onToggleSound = {
+                            wolfEngine.toggleSound()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        },
+                        onToggleHaptics = {
+                            wolfEngine.toggleHaptics()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        }
+                    )
+                }
 
-            else -> Unit
+                ClassicGameId.VESELY_KUCHAR -> {
+                    ChefConsoleBody(
+                        uiState = chefUiState,
+                        onBackToHub = {
+                            chefEngine.resetToDemo()
+                            chefUiState = chefEngine.state
+                            activeGame = null
+                        },
+                        onMoveLeft = {
+                            chefEngine.moveChefLeft()
+                            chefUiState = chefEngine.state
+                        },
+                        onMoveRight = {
+                            chefEngine.moveChefRight()
+                            chefUiState = chefEngine.state
+                        },
+                        onStartA = {
+                            chefEngine.startNewGame(GameMode.GAME_A)
+                            chefUiState = chefEngine.state
+                        },
+                        onStartB = {
+                            chefEngine.startNewGame(GameMode.GAME_B)
+                            chefUiState = chefEngine.state
+                        },
+                        onResetDemo = {
+                            chefEngine.resetToDemo()
+                            chefUiState = chefEngine.state
+                        },
+                        onToggleSound = {
+                            wolfEngine.toggleSound()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        },
+                        onToggleHaptics = {
+                            wolfEngine.toggleHaptics()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        }
+                    )
+                }
+
+                else -> Unit
+            }
         }
     }
 }

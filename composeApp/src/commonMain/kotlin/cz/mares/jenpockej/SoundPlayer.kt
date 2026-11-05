@@ -147,5 +147,9 @@ expect class SoundPlayer() {
     fun saveInt(key: String, value: Int)
     fun loadBool(key: String, defaultVal: Boolean): Boolean
     fun saveBool(key: String, value: Boolean)
+    fun loadString(key: String, defaultVal: String): String
+    fun saveString(key: String, value: String)
+    fun httpGet(url: String, callback: (Boolean, String) -> Unit)
+    fun httpPut(url: String, bodyJson: String, callback: (Boolean, Int, String) -> Unit)
     fun release()
 }
