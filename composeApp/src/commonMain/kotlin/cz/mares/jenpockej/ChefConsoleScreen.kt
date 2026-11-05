@@ -46,10 +46,17 @@ import androidx.compose.ui.unit.sp
 
 private val ChefPrintOrange = Color(0xFFC85A28)
 private val ChefPrintCopper = Color(0xFFD97F38)
+private val ChefPrintGold = Color(0xFFE5A93C)
 private val ChefPrintBrown = Color(0xFF754624)
 private val ChefPrintDarkWood = Color(0xFF4A2B13)
-private val ChefPrintTile = Color(0xFFB8C2B2)
+private val ChefPrintTile = Color(0xFFBFC8B8)
 private val ChefPrintRed = Color(0xFFB52B24)
+
+// X souřadnice 4 sloupců jídla (0 = klobása, 1 = ryba, 2 = kotleta, 3 = volské oko)
+private val CHEF_FOOD_COL_X = floatArrayOf(224f, 356f, 488f, 620f)
+// Y souřadnice 5 výškových úrovní jídla (0 = nejvyšší bod pod hrnci .. 4 = těsně nad pánvičkou)
+// Všechny úrovně končí v y = 322, tedy čistě nad čepicí kuchaře (y = 352..534)!
+private val CHEF_FOOD_STEP_Y = floatArrayOf(106f, 160f, 214f, 268f, 322f)
 
 @Composable
 fun ChefConsoleBody(
@@ -71,6 +78,8 @@ fun ChefConsoleBody(
             Color(0xFFD0C9B8)
         )
     )
+
+    val maxChefCol = if (uiState.isRunning && uiState.mode == GameMode.GAME_A) 2 else 3
 
     Box(
         modifier = Modifier
@@ -349,7 +358,7 @@ fun ChefConsoleBody(
                 ) {
                     ChefActionButton(
                         label = "VPRAVO ▶",
-                        isActive = uiState.chefPos < 3 && uiState.isRunning,
+                        isActive = uiState.chefPos < maxChefCol && uiState.isRunning,
                         onClick = onMoveRight
                     )
                 }
@@ -527,67 +536,180 @@ private fun ChefLcdScreen(
 }
 
 private fun DrawScope.drawChefKitchenBackdrop(vp: LcdViewport) {
-    // 1. Kuchyňské kachličky v pozadí (jemný rastr)
-    for (ty in listOf(120f, 220f, 320f, 420f)) {
-        drawLine(ChefPrintTile, vp.pt(16f, ty), vp.pt(984f, ty), vp.s(2.0f))
+    val woodStroke = Stroke(width = vp.s(2.6f), cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+    // 1. Jemné spáry kuchyňského obkladu v pozadí
+    for (ty in listOf(136f, 240f, 344f)) {
+        drawLine(ChefPrintTile, vp.pt(14f, ty), vp.pt(986f, ty), vp.s(1.8f))
     }
 
-    // 2. Dřevěná polička vlevo nahoře pro kocoura
+    // 2. Dřevěná kuchyňská polička vlevo nahoře pro kocoura + kořenky u zdi
     drawRoundRect(
         color = ChefPrintBrown,
-        topLeft = vp.pt(14f, 142f),
-        size = Size(vp.x(146f), vp.y(14f)),
+        topLeft = vp.pt(14f, 140f),
+        size = Size(vp.x(142f), vp.y(13f)),
         cornerRadius = CornerRadius(vp.s(4f), vp.s(4f))
     )
-    drawLine(ChefPrintDarkWood, vp.pt(28f, 156f), vp.pt(56f, 192f), vp.s(5f), StrokeCap.Round)
+    drawRoundRect(
+        color = ChefPrintDarkWood,
+        topLeft = vp.pt(14f, 140f),
+        size = Size(vp.x(142f), vp.y(13f)),
+        cornerRadius = CornerRadius(vp.s(4f), vp.s(4f)),
+        style = woodStroke
+    )
+    // Vyřezávaná konzole pod poličkou
+    val shelfBracket = Path().apply {
+        moveTo(vp.x(22f), vp.y(153f))
+        lineTo(vp.x(56f), vp.y(153f))
+        quadraticTo(vp.x(36f), vp.y(172f), vp.x(22f), vp.y(194f))
+        close()
+    }
+    drawPath(shelfBracket, color = ChefPrintDarkWood)
 
-    // 3. Závěsná tyč s měděnými hrnci a naběračkami nahoře uprostřed
-    drawLine(ChefPrintDarkWood, vp.pt(210f, 28f), vp.pt(520f, 28f), vp.s(5f), StrokeCap.Round)
-    for (hx in listOf(255f, 355f, 455f)) {
-        drawLine(ChefPrintDarkWood, vp.pt(hx, 28f), vp.pt(hx, 46f), vp.s(3.2f))
+    // Kořenka na kraji poličky vlevo
+    drawRoundRect(
+        color = ChefPrintCopper,
+        topLeft = vp.pt(20f, 110f),
+        size = Size(vp.x(22f), vp.y(30f)),
+        cornerRadius = CornerRadius(vp.s(4f), vp.s(4f))
+    )
+    drawRoundRect(
+        color = ChefPrintDarkWood,
+        topLeft = vp.pt(18f, 104f),
+        size = Size(vp.x(26f), vp.y(8f)),
+        cornerRadius = CornerRadius(vp.s(2f), vp.s(2f))
+    )
+
+    // 3. Závěsná kovaná lišta s měděnými rendlíky, pokličkou a naběračkou nad dráhami jídla
+    drawLine(ChefPrintDarkWood, vp.pt(196f, 20f), vp.pt(650f, 20f), vp.s(5.0f), StrokeCap.Round)
+    drawCircle(ChefPrintDarkWood, radius = vp.s(4.5f), center = vp.pt(196f, 20f))
+    drawCircle(ChefPrintDarkWood, radius = vp.s(4.5f), center = vp.pt(650f, 20f))
+
+    // 3 měděné rendlíky s uchy přímo nad sloupci 0, 1, 2
+    for (i in 0..2) {
+        val hx = CHEF_FOOD_COL_X[i]
+        // Háček
+        drawLine(ChefPrintDarkWood, vp.pt(hx, 20f), vp.pt(hx, 35f), vp.s(3.0f), StrokeCap.Round)
+        // Ucha hrnce
+        drawArc(
+            color = ChefPrintDarkWood,
+            startAngle = 90f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = vp.pt(hx - 30f, 42f),
+            size = Size(vp.x(12f), vp.y(16f)),
+            style = Stroke(width = vp.s(2.8f), cap = StrokeCap.Round)
+        )
+        drawArc(
+            color = ChefPrintDarkWood,
+            startAngle = -90f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = vp.pt(hx + 18f, 42f),
+            size = Size(vp.x(12f), vp.y(16f)),
+            style = Stroke(width = vp.s(2.8f), cap = StrokeCap.Round)
+        )
+        // Tělo měděného hrnce
         drawRoundRect(
             color = ChefPrintCopper,
-            topLeft = vp.pt(hx - 24f, 46f),
-            size = Size(vp.x(48f), vp.y(32f)),
-            cornerRadius = CornerRadius(vp.s(6f), vp.s(6f))
+            topLeft = vp.pt(hx - 23f, 36f),
+            size = Size(vp.x(46f), vp.y(30f)),
+            cornerRadius = CornerRadius(vp.s(5f), vp.s(5f))
         )
+        drawLine(ChefPrintGold, vp.pt(hx - 18f, 42f), vp.pt(hx + 18f, 42f), vp.s(3.0f), StrokeCap.Round)
         drawRoundRect(
             color = ChefPrintDarkWood,
-            topLeft = vp.pt(hx - 24f, 46f),
-            size = Size(vp.x(48f), vp.y(32f)),
-            cornerRadius = CornerRadius(vp.s(6f), vp.s(6f)),
-            style = Stroke(width = vp.s(2.6f))
+            topLeft = vp.pt(hx - 23f, 36f),
+            size = Size(vp.x(46f), vp.y(30f)),
+            cornerRadius = CornerRadius(vp.s(5f), vp.s(5f)),
+            style = woodStroke
         )
     }
 
-    // 4. Kuchyňský sporák s hrncem vpravo dole
+    // Závěsná měděná pánvička a naběračka nad 4. sloupcem (x = 620)
+    val panHangerX = CHEF_FOOD_COL_X[3]
+    drawLine(ChefPrintDarkWood, vp.pt(panHangerX, 20f), vp.pt(panHangerX, 38f), vp.s(3.0f), StrokeCap.Round)
+    drawCircle(ChefPrintCopper, radius = vp.s(16f), center = vp.pt(panHangerX, 52f))
+    drawCircle(ChefPrintGold, radius = vp.s(9f), center = vp.pt(panHangerX, 52f))
+    drawCircle(ChefPrintDarkWood, radius = vp.s(16f), center = vp.pt(panHangerX, 52f), style = woodStroke)
+
+    // 4. Kuchyňský sporák s troubou, plamenem a hrncem vpravo dole (mimo dosah kuchaře)
+    val stoveLeft = 876f
+    val stoveTop = 356f
+    // Kouřící hrnec na plotně sporáku
     drawRoundRect(
-        color = ChefPrintBrown,
-        topLeft = vp.pt(872f, 360f),
-        size = Size(vp.x(112f), vp.y(178f)),
+        color = ChefPrintCopper,
+        topLeft = vp.pt(896f, 312f),
+        size = Size(vp.x(68f), vp.y(44f)),
         cornerRadius = CornerRadius(vp.s(6f), vp.s(6f))
     )
     drawRoundRect(
-        color = ChefPrintOrange,
-        topLeft = vp.pt(886f, 404f),
-        size = Size(vp.x(84f), vp.y(72f)),
-        cornerRadius = CornerRadius(vp.s(4f), vp.s(4f))
+        color = ChefPrintDarkWood,
+        topLeft = vp.pt(896f, 312f),
+        size = Size(vp.x(68f), vp.y(44f)),
+        cornerRadius = CornerRadius(vp.s(6f), vp.s(6f)),
+        style = woodStroke
     )
-    for (kx in listOf(894f, 928f, 962f)) {
-        drawCircle(ChefPrintDarkWood, radius = vp.s(5f), center = vp.pt(kx, 380f))
+    // Poklička hrnce
+    drawOval(ChefPrintGold, vp.pt(892f, 304f), Size(vp.x(76f), vp.y(14f)))
+    drawOval(ChefPrintDarkWood, vp.pt(892f, 304f), Size(vp.x(76f), vp.y(14f)), style = woodStroke)
+    drawCircle(ChefPrintDarkWood, radius = vp.s(5f), center = vp.pt(930f, 299f))
+
+    // Tělo sporáku
+    drawRoundRect(
+        color = ChefPrintBrown,
+        topLeft = vp.pt(stoveLeft, stoveTop),
+        size = Size(vp.x(108f), vp.y(182f)),
+        cornerRadius = CornerRadius(vp.s(6f), vp.s(6f))
+    )
+    drawRoundRect(
+        color = ChefPrintDarkWood,
+        topLeft = vp.pt(stoveLeft, stoveTop),
+        size = Size(vp.x(108f), vp.y(182f)),
+        cornerRadius = CornerRadius(vp.s(6f), vp.s(6f)),
+        style = woodStroke
+    )
+    // Dvířka trouby s průzorem
+    drawRoundRect(
+        color = ChefPrintOrange,
+        topLeft = vp.pt(stoveLeft + 14f, stoveTop + 44f),
+        size = Size(vp.x(80f), vp.y(78f)),
+        cornerRadius = CornerRadius(vp.s(5f), vp.s(5f))
+    )
+    drawRoundRect(
+        color = ChefPrintDarkWood,
+        topLeft = vp.pt(stoveLeft + 14f, stoveTop + 44f),
+        size = Size(vp.x(80f), vp.y(78f)),
+        cornerRadius = CornerRadius(vp.s(5f), vp.s(5f)),
+        style = woodStroke
+    )
+    drawLine(ChefPrintGold, vp.pt(stoveLeft + 22f, stoveTop + 54f), vp.pt(stoveLeft + 86f, stoveTop + 54f), vp.s(3.2f), StrokeCap.Round)
+    // Knoflíky hořáků
+    for (kx in listOf(896f, 930f, 964f)) {
+        drawCircle(ChefPrintGold, radius = vp.s(5.5f), center = vp.pt(kx, stoveTop + 20f))
+        drawCircle(ChefPrintDarkWood, radius = vp.s(5.5f), center = vp.pt(kx, stoveTop + 20f), style = Stroke(width = vp.s(2f)))
     }
 
-    // 5. Myší díra v levém dolním rohu a podlaha kuchyně
+    // 5. Myší díra v levém dolním rohu a pevná linie podlahy kuchyně
     val mouseHole = Path().apply {
-        moveTo(vp.x(18f), vp.y(538f))
+        moveTo(vp.x(16f), vp.y(538f))
         cubicTo(
-            vp.x(18f), vp.y(492f),
-            vp.x(68f), vp.y(492f),
+            vp.x(16f), vp.y(490f),
+            vp.x(68f), vp.y(490f),
             vp.x(68f), vp.y(538f)
         )
         close()
     }
     drawPath(mouseHole, color = ChefPrintDarkWood)
+    drawArc(
+        color = ChefPrintBrown,
+        startAngle = 180f,
+        sweepAngle = 180f,
+        useCenter = false,
+        topLeft = vp.pt(14f, 498f),
+        size = Size(vp.x(56f), vp.y(78f)),
+        style = Stroke(width = vp.s(3.5f))
+    )
     drawLine(ChefPrintDarkWood, vp.pt(10f, 538f), vp.pt(990f, 538f), vp.s(6.5f), StrokeCap.Round)
 }
 
@@ -604,7 +726,7 @@ private fun DrawScope.drawChefLcdLayer(
         }
     }
 
-    // 1. Čtyřmístné 7segmentové skóre vpravo nahoře + 3 trestné myšky pod ním
+    // 1. Čtyřmístné 7segmentové skóre vpravo nahoře (x = 700..884, zcela mimo 4. sloupec jídla!)
     val clamped = snapshot.score.coerceIn(0, 9999)
     val digits = intArrayOf(
         if (clamped >= 1000) (clamped / 1000) % 10 else 0,
@@ -615,16 +737,17 @@ private fun DrawScope.drawChefLcdLayer(
     for (i in 0..3) {
         drawChefSevenSeg(
             vp = vp,
-            x = 590f + i * 48f,
-            y = 28f,
-            dw = 32f,
-            dh = 60f,
+            x = 700f + i * 46f,
+            y = 26f,
+            dw = 31f,
+            dh = 58f,
             value = digits[i],
             onCol = segColor(true),
             offCol = segColor(false)
         )
     }
 
+    // 3 trestné myšky přímo pod číslicemi skóre (x = 724, 784, 844 -> nekolidují se sloupcem 3!)
     for (idx in 0..2) {
         val thresholdFull = (idx + 1) * 2
         val thresholdHalf = thresholdFull - 1
@@ -633,21 +756,21 @@ private fun DrawScope.drawChefLcdLayer(
             snapshot.penaltyHalfPoints == thresholdHalf -> snapshot.blinkPhase
             else -> false
         }
-        drawPenaltyMouseHead(vp, cx = 610f + idx * 58f, cy = 122f, col = segColor(isLit))
+        drawPenaltyMouseHead(vp, cx = 724f + idx * 60f, cy = 114f, col = segColor(isLit))
     }
 
-    // 2. Kocour na poličce vlevo nahoře s pohyblivou tlapkou
-    drawShelfCat(
+    // 2. Komiksový kocour na poličce vlevo nahoře s vidličkou v tlapce
+    drawShelfCatWithFork(
         vp = vp,
         catCol = segColor(snapshot.catVisible),
-        pawDownCol = segColor(snapshot.catVisible && snapshot.catHoldingFood),
-        pawUpCol = segColor(snapshot.catVisible && !snapshot.catHoldingFood)
+        forkDownCol = segColor(snapshot.catVisible && snapshot.catHoldingFood),
+        forkUpCol = segColor(snapshot.catVisible && !snapshot.catHoldingFood)
     )
 
-    // 3. 4 sloupce padajícího / nadhazovaného jídla (step 0..4)
+    // 3. 4 sloupce padajícího / nadhazovaného jídla (step 0..4, končí v y = 322 nad čepicí kuchaře)
     drawFallingFoods(vp, snapshot.foods, ::segColor)
 
-    // 4. Kuchař ve vysoké čepici s pánvičkou na 4 pozicích (0..3)
+    // 4. Komiksový kuchař ve vysoké čepici s pánvičkou na 4 pozicích (0..3)
     for (pos in 0..3) {
         val activeChef = snapshot.crashAnim == null && snapshot.chefPos == pos
         drawChefAtPosition(
@@ -669,49 +792,113 @@ private fun DrawScope.drawChefLcdLayer(
     drawChefModeLabel(vp, startX = 858f, topY = 558f, isB = true, col = gameBCol)
 }
 
-private fun DrawScope.drawShelfCat(
+private fun DrawScope.drawShelfCatWithFork(
     vp: LcdViewport,
     catCol: Color,
-    pawDownCol: Color,
-    pawUpCol: Color
+    forkDownCol: Color,
+    forkUpCol: Color
 ) {
-    val cx = 86f
-    val cy = 104f
+    val cx = 92f
+    val cy = 102f
     val outline = Stroke(width = vp.s(3.4f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
     if (catCol != Color.Transparent) {
-        // Tělo sedícího kocoura a zatočený ocas
+        // Zatočený kočičí ocas visící přes okraj poličky
+        val tail = Path().apply {
+            moveTo(vp.x(cx - 26f), vp.y(cy + 34f))
+            cubicTo(
+                vp.x(cx - 48f), vp.y(cy + 56f),
+                vp.x(cx - 24f), vp.y(cy + 82f),
+                vp.x(cx - 10f), vp.y(cy + 72f)
+            )
+        }
+        drawPath(tail, color = catCol, style = Stroke(width = vp.s(6.5f), cap = StrokeCap.Round))
+
+        // Tělo sedícího kocoura s bílým bříškem
         val body = Path().apply {
-            moveTo(vp.x(cx - 28f), vp.y(cy + 36f))
-            cubicTo(vp.x(cx - 32f), vp.y(cy + 4f), vp.x(cx + 8f), vp.y(cy + 4f), vp.x(cx + 18f), vp.y(cy + 36f))
+            moveTo(vp.x(cx - 26f), vp.y(cy + 36f))
+            cubicTo(
+                vp.x(cx - 30f), vp.y(cy + 2f),
+                vp.x(cx + 12f), vp.y(cy + 2f),
+                vp.x(cx + 20f), vp.y(cy + 36f)
+            )
             close()
         }
         drawPath(body, color = catCol)
+        drawOval(LcdBgColor, vp.pt(cx - 8f, cy + 12f), Size(vp.x(20f), vp.y(22f)))
 
-        // Hlava se špičatýma ušima
-        drawCircle(color = LcdBgColor, radius = vp.s(16f), center = vp.pt(cx + 6f, cy - 4f))
-        drawCircle(color = catCol, radius = vp.s(16f), center = vp.pt(cx + 6f, cy - 4f), style = outline)
+        // Špičaté kočičí uši
         val ears = Path().apply {
-            moveTo(vp.x(cx - 6f), vp.y(cy - 14f))
-            lineTo(vp.x(cx - 12f), vp.y(cy - 30f))
+            moveTo(vp.x(cx - 8f), vp.y(cy - 12f))
+            lineTo(vp.x(cx - 16f), vp.y(cy - 34f))
             lineTo(vp.x(cx + 2f), vp.y(cy - 18f))
-            moveTo(vp.x(cx + 10f), vp.y(cy - 18f))
-            lineTo(vp.x(cx + 20f), vp.y(cy - 30f))
-            lineTo(vp.x(cx + 20f), vp.y(cy - 12f))
+            lineTo(vp.x(cx + 10f), vp.y(cy - 18f))
+            lineTo(vp.x(cx + 24f), vp.y(cy - 34f))
+            lineTo(vp.x(vp.x(cx + 20f) / vp.x(1f)), vp.y(cy - 10f))
+            close()
         }
-        drawPath(ears, color = catCol, style = outline)
-        drawCircle(catCol, radius = vp.s(2.6f), center = vp.pt(cx + 2f, cy - 6f))
-        drawCircle(catCol, radius = vp.s(2.6f), center = vp.pt(cx + 12f, cy - 6f))
+        drawPath(ears, color = catCol)
+
+        // Kulatá hlava kocoura se světlým vnitřkem, očima, čumáčkem a fousky
+        drawOval(LcdBgColor, vp.pt(cx - 12f, cy - 20f), Size(vp.x(36f), vp.y(30f)))
+        drawOval(catCol, vp.pt(cx - 12f, cy - 20f), Size(vp.x(36f), vp.y(30f)), style = outline)
+
+        // Oči a čumáček
+        drawOval(catCol, vp.pt(cx - 1f, cy - 12f), Size(vp.x(5f), vp.y(8f)))
+        drawOval(catCol, vp.pt(cx + 10f, cy - 12f), Size(vp.x(5f), vp.y(8f)))
+        drawCircle(catCol, radius = vp.s(3.0f), center = vp.pt(cx + 6f, cy - 2f))
+
+        // Fousky kocoura
+        drawLine(catCol, vp.pt(cx - 4f, cy - 2f), vp.pt(cx - 22f, cy - 6f), vp.s(2.0f), StrokeCap.Round)
+        drawLine(catCol, vp.pt(cx - 4f, cy + 1f), vp.pt(cx - 22f, cy + 3f), vp.s(2.0f), StrokeCap.Round)
+        drawLine(catCol, vp.pt(cx + 15f, cy - 2f), vp.pt(cx + 32f, cy - 6f), vp.s(2.0f), StrokeCap.Round)
+        drawLine(catCol, vp.pt(cx + 15f, cy + 1f), vp.pt(cx + 32f, cy + 3f), vp.s(2.0f), StrokeCap.Round)
     }
 
-    if (pawUpCol != Color.Transparent) {
-        drawLine(pawUpCol, vp.pt(cx + 16f, cy + 12f), vp.pt(cx + 52f, cy - 4f), vp.s(6.0f), StrokeCap.Round)
-        drawCircle(pawUpCol, radius = vp.s(5.5f), center = vp.pt(cx + 54f, cy - 4f))
+    // Horní klidová poloha tlapky s vidličkou
+    if (forkUpCol != Color.Transparent) {
+        drawCatPawAndFork(
+            vp = vp,
+            shoulderX = cx + 16f,
+            shoulderY = cy + 12f,
+            tipX = 166f,
+            tipY = 74f,
+            col = forkUpCol
+        )
     }
-    if (pawDownCol != Color.Transparent) {
-        drawLine(pawDownCol, vp.pt(cx + 16f, cy + 16f), vp.pt(196f, 168f), vp.s(6.0f), StrokeCap.Round)
-        drawCircle(pawDownCol, radius = vp.s(6.0f), center = vp.pt(200f, 170f))
+
+    // Dolní poloha tlapky s vidličkou (přidržuje klobásu na pozici col 0, step 0 -> x = 224, y = 106)
+    if (forkDownCol != Color.Transparent) {
+        drawCatPawAndFork(
+            vp = vp,
+            shoulderX = cx + 16f,
+            shoulderY = cy + 16f,
+            tipX = 198f,
+            tipY = 104f,
+            col = forkDownCol
+        )
     }
+}
+
+private fun DrawScope.drawCatPawAndFork(
+    vp: LcdViewport,
+    shoulderX: Float,
+    shoulderY: Float,
+    tipX: Float,
+    tipY: Float,
+    col: Color
+) {
+    val wristX = (shoulderX + tipX) * 0.52f
+    val wristY = (shoulderY + tipY) * 0.52f
+    // Tlapka kocoura
+    drawLine(col, vp.pt(shoulderX, shoulderY), vp.pt(wristX, wristY), vp.s(6.2f), StrokeCap.Round)
+    drawCircle(col, radius = vp.s(5.0f), center = vp.pt(wristX, wristY))
+    // Násada vidličky a 3 hroty
+    drawLine(col, vp.pt(wristX, wristY), vp.pt(tipX, tipY), vp.s(3.2f), StrokeCap.Round)
+    drawLine(col, vp.pt(tipX, tipY - 6f), vp.pt(tipX, tipY + 6f), vp.s(3.0f), StrokeCap.Round)
+    drawLine(col, vp.pt(tipX, tipY - 5f), vp.pt(tipX + 10f, tipY - 4f), vp.s(2.4f), StrokeCap.Round)
+    drawLine(col, vp.pt(tipX, tipY), vp.pt(tipX + 11f, tipY), vp.s(2.4f), StrokeCap.Round)
+    drawLine(col, vp.pt(tipX, tipY + 5f), vp.pt(tipX + 10f, tipY + 4f), vp.s(2.4f), StrokeCap.Round)
 }
 
 private fun DrawScope.drawFallingFoods(
@@ -719,9 +906,7 @@ private fun DrawScope.drawFallingFoods(
     foods: List<FoodItem>,
     segColor: (Boolean) -> Color
 ) {
-    val colX = floatArrayOf(226f, 368f, 512f, 656f)
-    val stepY = floatArrayOf(124f, 182f, 242f, 304f, 364f)
-    val stepAngles = floatArrayOf(-15f, 35f, 95f, 155f, 210f)
+    val stepAngles = floatArrayOf(-12f, 28f, 78f, 138f, 192f)
 
     for (col in 0..3) {
         for (step in 0..4) {
@@ -729,59 +914,73 @@ private fun DrawScope.drawFallingFoods(
             val ink = segColor(isLit)
             if (ink == Color.Transparent) continue
 
-            val center = vp.pt(colX[col], stepY[step])
-            val angle = stepAngles[step] + col * 18f
+            val center = vp.pt(CHEF_FOOD_COL_X[col], CHEF_FOOD_STEP_Y[step])
+            val angle = stepAngles[step] + col * 14f
 
             rotate(degrees = angle, pivot = center) {
                 when (col) {
                     0 -> {
-                        // 0: Klobása / párek
+                        // Sloupec 0: Klobása / párek se zavázanými konci
                         drawRoundRect(
                             color = ink,
-                            topLeft = Offset(center.x - vp.x(20f), center.y - vp.y(8f)),
-                            size = Size(vp.x(40f), vp.y(16f)),
+                            topLeft = Offset(center.x - vp.x(21f), center.y - vp.y(8f)),
+                            size = Size(vp.x(42f), vp.y(16f)),
                             cornerRadius = CornerRadius(vp.s(8f), vp.s(8f))
                         )
-                        drawLine(LcdBgColor, Offset(center.x - vp.x(8f), center.y - vp.y(3f)), Offset(center.x + vp.x(8f), center.y - vp.y(3f)), vp.s(2.4f), StrokeCap.Round)
+                        drawLine(
+                            color = LcdBgColor,
+                            start = Offset(center.x - vp.x(10f), center.y - vp.y(2.5f)),
+                            end = Offset(center.x + vp.x(10f), center.y - vp.y(2.5f)),
+                            strokeWidth = vp.s(2.4f),
+                            cap = StrokeCap.Round
+                        )
                     }
                     1 -> {
-                        // 1: Ryba
+                        // Sloupec 1: Ryba s ploutví a okem
                         val fish = Path().apply {
                             moveTo(center.x - vp.x(22f), center.y)
-                            quadraticTo(center.x, center.y - vp.y(15f), center.x + vp.x(16f), center.y)
-                            lineTo(center.x + vp.x(26f), center.y - vp.y(9f))
-                            lineTo(center.x + vp.x(26f), center.y + vp.y(9f))
-                            lineTo(center.x + vp.x(16f), center.y)
-                            quadraticTo(center.x, center.y + vp.y(15f), center.x - vp.x(22f), center.y)
+                            quadraticTo(center.x - vp.x(2f), center.y - vp.y(15f), center.x + vp.x(15f), center.y)
+                            lineTo(center.x + vp.x(25f), center.y - vp.y(9f))
+                            lineTo(center.x + vp.x(25f), center.y + vp.y(9f))
+                            lineTo(center.x + vp.x(15f), center.y)
+                            quadraticTo(center.x - vp.x(2f), center.y + vp.y(15f), center.x - vp.x(22f), center.y)
                             close()
                         }
                         drawPath(fish, color = ink)
-                        drawCircle(LcdBgColor, radius = vp.s(2.4f), center = Offset(center.x - vp.x(10f), center.y - vp.y(2f)))
+                        drawCircle(LcdBgColor, radius = vp.s(2.5f), center = Offset(center.x - vp.x(11f), center.y - vp.y(2f)))
                     }
                     2 -> {
-                        // 2: Kotleta na kosti
+                        // Sloupec 2: Kotleta / řízek na kosti
                         drawOval(
                             color = ink,
-                            topLeft = Offset(center.x - vp.x(18f), center.y - vp.y(11f)),
+                            topLeft = Offset(center.x - vp.x(19f), center.y - vp.y(11f)),
                             size = Size(vp.x(30f), vp.y(22f))
                         )
-                        drawCircle(LcdBgColor, radius = vp.s(4f), center = Offset(center.x - vp.x(4f), center.y))
-                        drawLine(ink, Offset(center.x + vp.x(10f), center.y), Offset(center.x + vp.x(24f), center.y), vp.s(5f), StrokeCap.Round)
+                        drawCircle(LcdBgColor, radius = vp.s(3.8f), center = Offset(center.x - vp.x(5f), center.y))
+                        drawLine(
+                            color = ink,
+                            start = Offset(center.x + vp.x(9f), center.y),
+                            end = Offset(center.x + vp.x(23f), center.y),
+                            strokeWidth = vp.s(5.0f),
+                            cap = StrokeCap.Round
+                        )
+                        drawCircle(ink, radius = vp.s(3.8f), center = Offset(center.x + vp.x(24f), center.y - vp.y(2.5f)))
+                        drawCircle(ink, radius = vp.s(3.8f), center = Offset(center.x + vp.x(24f), center.y + vp.y(2.5f)))
                     }
                     else -> {
-                        // 3: Volské oko / lívanec
+                        // Sloupec 3: Volské oko / lívanec
                         drawOval(
                             color = LcdBgColor,
-                            topLeft = Offset(center.x - vp.x(19f), center.y - vp.y(12f)),
-                            size = Size(vp.x(38f), vp.y(24f))
+                            topLeft = Offset(center.x - vp.x(19f), center.y - vp.y(11f)),
+                            size = Size(vp.x(38f), vp.y(22f))
                         )
                         drawOval(
                             color = ink,
-                            topLeft = Offset(center.x - vp.x(19f), center.y - vp.y(12f)),
-                            size = Size(vp.x(38f), vp.y(24f)),
-                            style = Stroke(width = vp.s(4.2f))
+                            topLeft = Offset(center.x - vp.x(19f), center.y - vp.y(11f)),
+                            size = Size(vp.x(38f), vp.y(22f)),
+                            style = Stroke(width = vp.s(4.0f))
                         )
-                        drawCircle(ink, radius = vp.s(5.5f), center = center)
+                        drawCircle(ink, radius = vp.s(5.2f), center = center)
                     }
                 }
             }
@@ -796,92 +995,161 @@ private fun DrawScope.drawChefAtPosition(
     panNormalCol: Color,
     panFlipCol: Color
 ) {
-    // Kuchař stojí napravo od pánvičky a drží pánvičku přímo pod sloupcem `pos` (226, 368, 512, 656)
-    val panCenterX = floatArrayOf(226f, 368f, 512f, 656f)[pos.coerceIn(0, 3)]
-    val chefX = panCenterX + 86f
-    val chefY = 442f
-    val outline = Stroke(width = vp.s(3.6f), cap = StrokeCap.Round, join = StrokeJoin.Round)
+    // Pánvička je přesně pod sloupcem `pos` (224, 356, 488, 620)
+    // a kuchař stojí o 62 jednotek napravo od středu pánvičky,
+    // přičemž vršek jeho čepice je v y = 352 (čistě pod nejnižší polohou jídla y = 322!).
+    val panCenterX = CHEF_FOOD_COL_X[pos.coerceIn(0, 3)]
+    val chefX = panCenterX + 62f
+    val outline = Stroke(width = vp.s(3.4f), cap = StrokeCap.Round, join = StrokeJoin.Round)
 
     if (bodyCol != Color.Transparent) {
-        // 1. Vysoká kuchařská čepice (toque)
-        val hatTopY = chefY - 76f
-        drawCircle(LcdBgColor, radius = vp.s(13f), center = vp.pt(chefX - 10f, hatTopY))
-        drawCircle(LcdBgColor, radius = vp.s(15f), center = vp.pt(chefX + 2f, hatTopY - 4f))
-        drawCircle(LcdBgColor, radius = vp.s(13f), center = vp.pt(chefX + 14f, hatTopY))
-        drawCircle(bodyCol, radius = vp.s(13f), center = vp.pt(chefX - 10f, hatTopY), style = outline)
-        drawCircle(bodyCol, radius = vp.s(15f), center = vp.pt(chefX + 2f, hatTopY - 4f), style = outline)
-        drawCircle(bodyCol, radius = vp.s(13f), center = vp.pt(chefX + 14f, hatTopY), style = outline)
+        // 1. Nadýchaná komiksová kuchařská čepice (toque) v y = 352..392
+        val hatCloud = Path().apply {
+            moveTo(vp.x(chefX - 18f), vp.y(384f))
+            cubicTo(vp.x(chefX - 28f), vp.y(366f), vp.x(chefX - 12f), vp.y(352f), vp.x(chefX - 4f), vp.y(360f))
+            cubicTo(vp.x(chefX + 2f), vp.y(348f), vp.x(chefX + 18f), vp.y(348f), vp.x(chefX + 20f), vp.y(362f))
+            cubicTo(vp.x(chefX + 32f), vp.y(360f), vp.x(chefX + 34f), vp.y(378f), vp.x(chefX + 20f), vp.y(386f))
+            close()
+        }
+        drawPath(hatCloud, color = LcdBgColor)
+        drawPath(hatCloud, color = bodyCol, style = outline)
 
+        // Čelenka kuchařské čepice
         drawRoundRect(
             color = LcdBgColor,
-            topLeft = vp.pt(chefX - 16f, hatTopY + 4f),
-            size = Size(vp.x(34f), vp.y(22f)),
+            topLeft = vp.pt(chefX - 16f, 380f),
+            size = Size(vp.x(34f), vp.y(14f)),
             cornerRadius = CornerRadius(vp.s(3f), vp.s(3f))
         )
         drawRoundRect(
             color = bodyCol,
-            topLeft = vp.pt(chefX - 16f, hatTopY + 4f),
-            size = Size(vp.x(34f), vp.y(22f)),
+            topLeft = vp.pt(chefX - 16f, 380f),
+            size = Size(vp.x(34f), vp.y(14f)),
             cornerRadius = CornerRadius(vp.s(3f), vp.s(3f)),
             style = outline
         )
 
-        // 2. Usměvavá hlava kuchaře s knírem
-        val headY = chefY - 34f
-        drawCircle(LcdBgColor, radius = vp.s(16f), center = vp.pt(chefX, headY))
-        drawCircle(bodyCol, radius = vp.s(16f), center = vp.pt(chefX, headY), style = outline)
-        drawCircle(bodyCol, radius = vp.s(2.8f), center = vp.pt(chefX - 6f, headY - 4f))
-        drawCircle(bodyCol, radius = vp.s(3.8f), center = vp.pt(chefX - 15f, headY))
-        // Knír kuchaře
-        drawLine(bodyCol, vp.pt(chefX - 16f, headY + 6f), vp.pt(chefX + 2f, headY + 4f), vp.s(3.6f), StrokeCap.Round)
+        // 2. Komiksová hlava kuchaře z profilu (hledí doleva na pánvičku) s velkým nosem a knírem
+        val headY = 410f
+        drawCircle(color = LcdBgColor, radius = vp.s(15.5f), center = vp.pt(chefX + 1f, headY))
+        drawCircle(color = bodyCol, radius = vp.s(15.5f), center = vp.pt(chefX + 1f, headY), style = outline)
 
-        // 3. Kuchařský rondon a zástěra s knoflíky
+        // Kulatý kuchařský nos vyčnívající doleva
+        drawCircle(color = LcdBgColor, radius = vp.s(5.5f), center = vp.pt(chefX - 15f, headY - 1f))
+        drawCircle(color = bodyCol, radius = vp.s(5.5f), center = vp.pt(chefX - 15f, headY - 1f), style = Stroke(width = vp.s(3.0f)))
+
+        // Oko a výrazný zatočený knír
+        drawCircle(color = bodyCol, radius = vp.s(2.6f), center = vp.pt(chefX - 5f, headY - 5f))
+        val mustache = Path().apply {
+            moveTo(vp.x(chefX - 20f), vp.y(headY + 7f))
+            quadraticTo(vp.x(chefX - 8f), vp.y(headY + 2f), vp.x(chefX + 4f), vp.y(headY + 7f))
+        }
+        drawPath(mustache, color = bodyCol, style = Stroke(width = vp.s(3.8f), cap = StrokeCap.Round))
+
+        // 3. Kuchařský šátek kolem krku + rondon a zástěra s dvouřadými knoflíky
+        val scarf = Path().apply {
+            moveTo(vp.x(chefX - 12f), vp.y(425f))
+            lineTo(vp.x(chefX + 14f), vp.y(425f))
+            lineTo(vp.x(chefX + 2f), vp.y(439f))
+            close()
+        }
+        drawPath(scarf, color = bodyCol)
+
         val apron = Path().apply {
-            moveTo(vp.x(chefX - 18f), vp.y(chefY - 16f))
-            lineTo(vp.x(chefX + 18f), vp.y(chefY - 16f))
-            lineTo(vp.x(chefX + 22f), vp.y(chefY + 42f))
-            lineTo(vp.x(chefX - 22f), vp.y(chefY + 42f))
+            moveTo(vp.x(chefX - 16f), vp.y(427f))
+            lineTo(vp.x(chefX + 17f), vp.y(427f))
+            lineTo(vp.x(chefX + 22f), vp.y(496f))
+            lineTo(vp.x(chefX - 21f), vp.y(496f))
             close()
         }
         drawPath(apron, color = LcdBgColor)
         drawPath(apron, color = bodyCol, style = outline)
-        drawCircle(bodyCol, radius = vp.s(2.8f), center = vp.pt(chefX - 6f, chefY))
-        drawCircle(bodyCol, radius = vp.s(2.8f), center = vp.pt(chefX - 6f, chefY + 16f))
 
-        // 4. Nohy kuchaře na podlaze
-        drawLine(bodyCol, vp.pt(chefX - 10f, chefY + 42f), vp.pt(chefX - 16f, 534f), vp.s(7.5f), StrokeCap.Round)
-        drawLine(bodyCol, vp.pt(chefX + 10f, chefY + 42f), vp.pt(chefX + 16f, 534f), vp.s(7.5f), StrokeCap.Round)
+        // Dvouřadé knoflíky rondonu a pas zástěry
+        drawLine(bodyCol, vp.pt(chefX - 18f, 460f), vp.pt(chefX + 19f, 460f), vp.s(2.8f))
+        for (by in listOf(440f, 451f)) {
+            drawCircle(bodyCol, radius = vp.s(2.4f), center = vp.pt(chefX - 7f, by))
+            drawCircle(bodyCol, radius = vp.s(2.4f), center = vp.pt(chefX + 5f, by))
+        }
+
+        // Zadní pokrčená ruka kuchaře v bok
+        val backArm = Path().apply {
+            moveTo(vp.x(chefX + 16f), vp.y(434f))
+            lineTo(vp.x(chefX + 29f), vp.y(450f))
+            lineTo(vp.x(chefX + 19f), vp.y(464f))
+        }
+        drawPath(backArm, color = bodyCol, style = Stroke(width = vp.s(5.5f), cap = StrokeCap.Round, join = StrokeJoin.Round))
+
+        // 4. Rozkročené nohy a boty kuchaře pevně na podlaze (y = 534)
+        val stride = if (pos % 2 == 0) 13f else 9f
+        drawLine(bodyCol, vp.pt(chefX - 8f, 496f), vp.pt(chefX - stride, 530f), vp.s(7.2f), StrokeCap.Round)
+        drawOval(bodyCol, vp.pt(chefX - stride - 14f, 524f), Size(vp.x(22f), vp.y(11f)))
+
+        drawLine(bodyCol, vp.pt(chefX + 8f, 496f), vp.pt(chefX + stride, 530f), vp.s(7.2f), StrokeCap.Round)
+        drawOval(bodyCol, vp.pt(chefX + stride - 6f, 524f), Size(vp.x(22f), vp.y(11f)))
     }
 
-    // 5. Ruka s pánvičkou (normální vodorovná vs. nadhazující nahoru)
+    // 5. Přední ruka s pánvičkou přímo pod sloupcem `pos` (vodorovná vs. nadhazující)
     if (panNormalCol != Color.Transparent) {
-        drawChefPanWithArm(vp, chefX = chefX - 16f, shoulderY = chefY - 4f, panX = panCenterX, panY = 408f, tiltDeg = 0f, col = panNormalCol)
+        drawChefPanWithArm(
+            vp = vp,
+            shoulderX = chefX - 15f,
+            shoulderY = 438f,
+            panX = panCenterX,
+            panY = 368f,
+            tiltDeg = 0f,
+            col = panNormalCol
+        )
     }
     if (panFlipCol != Color.Transparent) {
-        drawChefPanWithArm(vp, chefX = chefX - 16f, shoulderY = chefY - 8f, panX = panCenterX, panY = 390f, tiltDeg = 18f, col = panFlipCol)
+        drawChefPanWithArm(
+            vp = vp,
+            shoulderX = chefX - 15f,
+            shoulderY = 434f,
+            panX = panCenterX,
+            panY = 350f,
+            tiltDeg = 16f,
+            col = panFlipCol
+        )
     }
 }
 
 private fun DrawScope.drawChefPanWithArm(
     vp: LcdViewport,
-    chefX: Float,
+    shoulderX: Float,
     shoulderY: Float,
     panX: Float,
     panY: Float,
     tiltDeg: Float,
     col: Color
 ) {
-    val handleEndX = panX + 34f
-    drawLine(col, vp.pt(chefX, shoulderY), vp.pt(handleEndX, panY), vp.s(7.0f), StrokeCap.Round)
+    val handleGripX = panX + 34f
+    val handleGripY = panY + 6f
+    val elbowX = (shoulderX + handleGripX) * 0.54f
+    val elbowY = shoulderY + 6f
+
+    // Paže kuchaře ohnutá v lokti a držící rukojeť pánvičky
+    val armPath = Path().apply {
+        moveTo(vp.x(shoulderX), vp.y(shoulderY))
+        lineTo(vp.x(elbowX), vp.y(elbowY))
+        lineTo(vp.x(handleGripX), vp.y(handleGripY))
+    }
+    drawPath(
+        path = armPath,
+        color = col,
+        style = Stroke(width = vp.s(6.8f), cap = StrokeCap.Round, join = StrokeJoin.Round)
+    )
 
     val pivot = vp.pt(panX, panY)
     rotate(degrees = tiltDeg, pivot = pivot) {
-        drawLine(col, vp.pt(panX + 18f, panY), vp.pt(panX + 44f, panY), vp.s(5.5f), StrokeCap.Round)
+        // Dlouhá rukojeť pánvičky
+        drawLine(col, vp.pt(panX + 20f, panY + 1f), vp.pt(panX + 40f, panY + 7f), vp.s(4.8f), StrokeCap.Round)
+        // Tělo pánvičky se zkosenými stěnami
         val panBody = Path().apply {
-            moveTo(vp.x(panX - 28f), vp.y(panY - 4f))
-            lineTo(vp.x(panX + 28f), vp.y(panY - 4f))
-            lineTo(vp.x(panX + 22f), vp.y(panY + 12f))
-            lineTo(vp.x(panX - 22f), vp.y(panY + 12f))
+            moveTo(vp.x(panX - 27f), vp.y(panY - 4f))
+            lineTo(vp.x(panX + 27f), vp.y(panY - 4f))
+            lineTo(vp.x(panX + 21f), vp.y(panY + 11f))
+            lineTo(vp.x(panX - 21f), vp.y(panY + 11f))
             close()
         }
         drawPath(panBody, color = col)
@@ -893,30 +1161,35 @@ private fun DrawScope.drawFloorMouseCrash(
     crashAnim: ChefCrashAnim?,
     segColor: (Boolean) -> Color
 ) {
-    val colX = floatArrayOf(226f, 368f, 512f, 656f)
     for (c in 0..3) {
         val splatLit = crashAnim != null && crashAnim.droppedCol == c && crashAnim.frame == 0
         val col = segColor(splatLit)
         if (col != Color.Transparent) {
-            val sx = colX[c]
-            drawOval(col, vp.pt(sx - 22f, 518f), Size(vp.x(44f), vp.y(14f)))
-            drawCircle(col, radius = vp.s(3.5f), center = vp.pt(sx - 28f, 512f))
-            drawCircle(col, radius = vp.s(3.5f), center = vp.pt(sx + 28f, 512f))
+            val sx = CHEF_FOOD_COL_X[c]
+            drawOval(col, vp.pt(sx - 20f, 520f), Size(vp.x(40f), vp.y(12f)))
+            drawCircle(col, radius = vp.s(3.2f), center = vp.pt(sx - 26f, 514f))
+            drawCircle(col, radius = vp.s(3.2f), center = vp.pt(sx + 26f, 514f))
         }
     }
 
+    // 3 fáze myšky utíkající po podlaze s kořistí do myší díry vlevo (frame 1 -> 2 -> 3)
+    val mouseStepsX = floatArrayOf(380f, 240f, 112f)
     for (step in 1..3) {
         val mouseLit = crashAnim != null && crashAnim.frame == step
         val col = segColor(mouseLit)
         if (col == Color.Transparent) continue
 
-        val mx = 120f + step * 110f
+        val mx = mouseStepsX[step - 1]
         val my = 516f
-        drawOval(col, vp.pt(mx - 14f, my - 8f), Size(vp.x(28f), vp.y(16f)))
-        drawCircle(col, radius = vp.s(6f), center = vp.pt(mx - 12f, my - 10f))
-        drawLine(col, vp.pt(mx + 14f, my), vp.pt(mx + 28f, my - 6f), vp.s(2.8f), StrokeCap.Round)
-        // Vidlička v tlapce myšky
-        drawLine(col, vp.pt(mx - 16f, my - 4f), vp.pt(mx - 28f, my - 14f), vp.s(2.8f), StrokeCap.Round)
+        // Tělo myšky, ouško, hlava a dlouhý ocásek
+        drawOval(col, vp.pt(mx - 14f, my - 7f), Size(vp.x(28f), vp.y(15f)))
+        drawCircle(col, radius = vp.s(6.5f), center = vp.pt(mx - 14f, my - 6f))
+        drawCircle(col, radius = vp.s(5.0f), center = vp.pt(mx - 10f, my - 13f))
+        drawCircle(LcdBgColor, radius = vp.s(1.6f), center = vp.pt(mx - 16f, my - 7f))
+        drawLine(col, vp.pt(mx + 14f, my + 2f), vp.pt(mx + 32f, my - 5f), vp.s(2.8f), StrokeCap.Round)
+        // Vidlička s jídlem nad hlavou myšky
+        drawLine(col, vp.pt(mx - 14f, my - 4f), vp.pt(mx - 28f, my - 16f), vp.s(3.0f), StrokeCap.Round)
+        drawOval(col, vp.pt(mx - 36f, my - 24f), Size(vp.x(16f), vp.y(9f)))
     }
 }
 
@@ -927,11 +1200,13 @@ private fun DrawScope.drawPenaltyMouseHead(
     col: Color
 ) {
     if (col == Color.Transparent) return
-    drawCircle(col, radius = vp.s(9f), center = vp.pt(cx, cy))
-    drawCircle(col, radius = vp.s(5.5f), center = vp.pt(cx - 8f, cy - 8f))
-    drawCircle(col, radius = vp.s(5.5f), center = vp.pt(cx + 8f, cy - 8f))
+    drawCircle(col, radius = vp.s(8.5f), center = vp.pt(cx, cy))
+    drawCircle(col, radius = vp.s(5.2f), center = vp.pt(cx - 8f, cy - 8f))
+    drawCircle(col, radius = vp.s(5.2f), center = vp.pt(cx + 8f, cy - 8f))
     drawCircle(LcdBgColor, radius = vp.s(1.8f), center = vp.pt(cx - 3f, cy - 2f))
     drawCircle(LcdBgColor, radius = vp.s(1.8f), center = vp.pt(cx + 3f, cy - 2f))
+    drawLine(col, vp.pt(cx - 8f, cy + 2f), vp.pt(cx - 17f, cy), vp.s(1.8f), StrokeCap.Round)
+    drawLine(col, vp.pt(cx + 8f, cy + 2f), vp.pt(cx + 17f, cy), vp.s(1.8f), StrokeCap.Round)
 }
 
 private fun DrawScope.drawChefSevenSeg(
