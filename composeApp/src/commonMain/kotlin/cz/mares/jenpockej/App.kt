@@ -49,13 +49,20 @@ import kotlinx.coroutines.delay
 fun App() {
     val soundPlayer = remember { SoundPlayer() }
     val onlineScoreManager = remember { OnlineScoreManager(media = soundPlayer) }
+
     val wolfEngine = remember { GameEngine(media = soundPlayer) }
     val oceanEngine = remember { OceanGameEngine(media = soundPlayer) }
     val chefEngine = remember { ChefGameEngine(media = soundPlayer) }
+    val bridgeEngine = remember { SpaceBridgeGameEngine(media = soundPlayer) }
+    val hockeyEngine = remember { HockeyGameEngine(media = soundPlayer) }
+    val slalomEngine = remember { SlalomGameEngine(media = soundPlayer) }
 
     var wolfUiState by remember { mutableStateOf(wolfEngine.state) }
     var oceanUiState by remember { mutableStateOf(oceanEngine.state) }
     var chefUiState by remember { mutableStateOf(chefEngine.state) }
+    var bridgeUiState by remember { mutableStateOf(bridgeEngine.state) }
+    var hockeyUiState by remember { mutableStateOf(hockeyEngine.state) }
+    var slalomUiState by remember { mutableStateOf(slalomEngine.state) }
 
     var activeGame by remember { mutableStateOf<ClassicGameId?>(null) }
     var showLeaderboard by remember { mutableStateOf(false) }
@@ -66,14 +73,14 @@ fun App() {
         }
     }
 
-    // Automatické odesílání překonaných osobních rekordů na pozadí do Firebase
+    // Automatické odesílání překonaných osobních rekordů všech 6 her na pozadí do Firebase
     LaunchedEffect(
-        wolfUiState.highScoreA,
-        wolfUiState.highScoreB,
-        oceanUiState.highScoreA,
-        oceanUiState.highScoreB,
-        chefUiState.highScoreA,
-        chefUiState.highScoreB
+        wolfUiState.highScoreA, wolfUiState.highScoreB,
+        oceanUiState.highScoreA, oceanUiState.highScoreB,
+        chefUiState.highScoreA, chefUiState.highScoreB,
+        bridgeUiState.highScoreA, bridgeUiState.highScoreB,
+        hockeyUiState.highScoreA, hockeyUiState.highScoreB,
+        slalomUiState.highScoreA, slalomUiState.highScoreB
     ) {
         onlineScoreManager.submitScoreQuietly(ClassicGameId.JEN_POCKEJ, GameMode.GAME_A, wolfUiState.highScoreA)
         onlineScoreManager.submitScoreQuietly(ClassicGameId.JEN_POCKEJ, GameMode.GAME_B, wolfUiState.highScoreB)
@@ -81,6 +88,12 @@ fun App() {
         onlineScoreManager.submitScoreQuietly(ClassicGameId.TAJEMSTVI_OCEANU, GameMode.GAME_B, oceanUiState.highScoreB)
         onlineScoreManager.submitScoreQuietly(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_A, chefUiState.highScoreA)
         onlineScoreManager.submitScoreQuietly(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_B, chefUiState.highScoreB)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.KOSMICKY_MOST, GameMode.GAME_A, bridgeUiState.highScoreA)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.KOSMICKY_MOST, GameMode.GAME_B, bridgeUiState.highScoreB)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.HOKEJ, GameMode.GAME_A, hockeyUiState.highScoreA)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.HOKEJ, GameMode.GAME_B, hockeyUiState.highScoreB)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.AUTOSLALOM, GameMode.GAME_A, slalomUiState.highScoreA)
+        onlineScoreManager.submitScoreQuietly(ClassicGameId.AUTOSLALOM, GameMode.GAME_B, slalomUiState.highScoreB)
     }
 
     LaunchedEffect(activeGame, showLeaderboard) {
@@ -107,16 +120,43 @@ fun App() {
                     chefUiState = chefEngine.state
                 }
             }
-            else -> Unit
+            ClassicGameId.KOSMICKY_MOST -> {
+                while (activeGame == ClassicGameId.KOSMICKY_MOST && !showLeaderboard) {
+                    delay(bridgeEngine.currentTickDelayMs())
+                    bridgeEngine.stepTick()
+                    bridgeUiState = bridgeEngine.state
+                }
+            }
+            ClassicGameId.HOKEJ -> {
+                while (activeGame == ClassicGameId.HOKEJ && !showLeaderboard) {
+                    delay(hockeyEngine.currentTickDelayMs())
+                    hockeyEngine.stepTick()
+                    hockeyUiState = hockeyEngine.state
+                }
+            }
+            ClassicGameId.AUTOSLALOM -> {
+                while (activeGame == ClassicGameId.AUTOSLALOM && !showLeaderboard) {
+                    delay(slalomEngine.currentTickDelayMs())
+                    slalomEngine.stepTick()
+                    slalomUiState = slalomEngine.state
+                }
+            }
+            null -> Unit
         }
     }
 
     fun syncAllAudio(sound: Boolean, haptics: Boolean) {
         oceanEngine.syncAudioSettings(sound = sound, haptics = haptics)
         chefEngine.syncAudioSettings(sound = sound, haptics = haptics)
+        bridgeEngine.syncAudioSettings(sound = sound, haptics = haptics)
+        hockeyEngine.syncAudioSettings(sound = sound, haptics = haptics)
+        slalomEngine.syncAudioSettings(sound = sound, haptics = haptics)
         wolfUiState = wolfEngine.state
         oceanUiState = oceanEngine.state
         chefUiState = chefEngine.state
+        bridgeUiState = bridgeEngine.state
+        hockeyUiState = hockeyEngine.state
+        slalomUiState = slalomEngine.state
     }
 
     MaterialTheme {
@@ -133,7 +173,12 @@ fun App() {
                             if (m == GameMode.GAME_A) oceanUiState.highScoreA else oceanUiState.highScoreB
                         ClassicGameId.VESELY_KUCHAR ->
                             if (m == GameMode.GAME_A) chefUiState.highScoreA else chefUiState.highScoreB
-                        else -> 0
+                        ClassicGameId.KOSMICKY_MOST ->
+                            if (m == GameMode.GAME_A) bridgeUiState.highScoreA else bridgeUiState.highScoreB
+                        ClassicGameId.HOKEJ ->
+                            if (m == GameMode.GAME_A) hockeyUiState.highScoreA else hockeyUiState.highScoreB
+                        ClassicGameId.AUTOSLALOM ->
+                            if (m == GameMode.GAME_A) slalomUiState.highScoreA else slalomUiState.highScoreB
                     }
                 },
                 allLocalScores = listOf(
@@ -142,7 +187,13 @@ fun App() {
                     Triple(ClassicGameId.TAJEMSTVI_OCEANU, GameMode.GAME_A, oceanUiState.highScoreA),
                     Triple(ClassicGameId.TAJEMSTVI_OCEANU, GameMode.GAME_B, oceanUiState.highScoreB),
                     Triple(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_A, chefUiState.highScoreA),
-                    Triple(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_B, chefUiState.highScoreB)
+                    Triple(ClassicGameId.VESELY_KUCHAR, GameMode.GAME_B, chefUiState.highScoreB),
+                    Triple(ClassicGameId.KOSMICKY_MOST, GameMode.GAME_A, bridgeUiState.highScoreA),
+                    Triple(ClassicGameId.KOSMICKY_MOST, GameMode.GAME_B, bridgeUiState.highScoreB),
+                    Triple(ClassicGameId.HOKEJ, GameMode.GAME_A, hockeyUiState.highScoreA),
+                    Triple(ClassicGameId.HOKEJ, GameMode.GAME_B, hockeyUiState.highScoreB),
+                    Triple(ClassicGameId.AUTOSLALOM, GameMode.GAME_A, slalomUiState.highScoreA),
+                    Triple(ClassicGameId.AUTOSLALOM, GameMode.GAME_B, slalomUiState.highScoreB)
                 ),
                 onBack = {
                     showLeaderboard = false
@@ -158,6 +209,12 @@ fun App() {
                         oceanHighScoreB = oceanUiState.highScoreB,
                         chefHighScoreA = chefUiState.highScoreA,
                         chefHighScoreB = chefUiState.highScoreB,
+                        bridgeHighScoreA = bridgeUiState.highScoreA,
+                        bridgeHighScoreB = bridgeUiState.highScoreB,
+                        hockeyHighScoreA = hockeyUiState.highScoreA,
+                        hockeyHighScoreB = hockeyUiState.highScoreB,
+                        slalomHighScoreA = slalomUiState.highScoreA,
+                        slalomHighScoreB = slalomUiState.highScoreB,
                         soundEnabled = wolfUiState.soundEnabled,
                         hapticsEnabled = wolfUiState.hapticsEnabled,
                         onToggleSound = {
@@ -172,32 +229,40 @@ fun App() {
                             showLeaderboard = true
                         },
                         onSelectGame = { chosen ->
+                            val s = wolfEngine.state.soundEnabled
+                            val h = wolfEngine.state.hapticsEnabled
                             when (chosen) {
                                 ClassicGameId.JEN_POCKEJ -> {
                                     wolfEngine.resetToDemo()
                                     wolfUiState = wolfEngine.state
-                                    activeGame = chosen
                                 }
                                 ClassicGameId.TAJEMSTVI_OCEANU -> {
-                                    oceanEngine.syncAudioSettings(
-                                        sound = wolfEngine.state.soundEnabled,
-                                        haptics = wolfEngine.state.hapticsEnabled
-                                    )
+                                    oceanEngine.syncAudioSettings(s, h)
                                     oceanEngine.resetToDemo()
                                     oceanUiState = oceanEngine.state
-                                    activeGame = chosen
                                 }
                                 ClassicGameId.VESELY_KUCHAR -> {
-                                    chefEngine.syncAudioSettings(
-                                        sound = wolfEngine.state.soundEnabled,
-                                        haptics = wolfEngine.state.hapticsEnabled
-                                    )
+                                    chefEngine.syncAudioSettings(s, h)
                                     chefEngine.resetToDemo()
                                     chefUiState = chefEngine.state
-                                    activeGame = chosen
                                 }
-                                else -> Unit
+                                ClassicGameId.KOSMICKY_MOST -> {
+                                    bridgeEngine.syncAudioSettings(s, h)
+                                    bridgeEngine.resetToDemo()
+                                    bridgeUiState = bridgeEngine.state
+                                }
+                                ClassicGameId.HOKEJ -> {
+                                    hockeyEngine.syncAudioSettings(s, h)
+                                    hockeyEngine.resetToDemo()
+                                    hockeyUiState = hockeyEngine.state
+                                }
+                                ClassicGameId.AUTOSLALOM -> {
+                                    slalomEngine.syncAudioSettings(s, h)
+                                    slalomEngine.resetToDemo()
+                                    slalomUiState = slalomEngine.state
+                                }
                             }
+                            activeGame = chosen
                         }
                     )
                 }
@@ -315,7 +380,119 @@ fun App() {
                     )
                 }
 
-                else -> Unit
+                ClassicGameId.KOSMICKY_MOST -> {
+                    SpaceBridgeConsoleBody(
+                        uiState = bridgeUiState,
+                        onBackToHub = {
+                            bridgeEngine.resetToDemo()
+                            bridgeUiState = bridgeEngine.state
+                            activeGame = null
+                        },
+                        onMoveLeft = {
+                            bridgeEngine.moveBridgeLeft()
+                            bridgeUiState = bridgeEngine.state
+                        },
+                        onMoveRight = {
+                            bridgeEngine.moveBridgeRight()
+                            bridgeUiState = bridgeEngine.state
+                        },
+                        onStartA = {
+                            bridgeEngine.startNewGame(GameMode.GAME_A)
+                            bridgeUiState = bridgeEngine.state
+                        },
+                        onStartB = {
+                            bridgeEngine.startNewGame(GameMode.GAME_B)
+                            bridgeUiState = bridgeEngine.state
+                        },
+                        onResetDemo = {
+                            bridgeEngine.resetToDemo()
+                            bridgeUiState = bridgeEngine.state
+                        },
+                        onToggleSound = {
+                            wolfEngine.toggleSound()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        },
+                        onToggleHaptics = {
+                            wolfEngine.toggleHaptics()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        }
+                    )
+                }
+
+                ClassicGameId.HOKEJ -> {
+                    HockeyConsoleBody(
+                        uiState = hockeyUiState,
+                        onBackToHub = {
+                            hockeyEngine.resetToDemo()
+                            hockeyUiState = hockeyEngine.state
+                            activeGame = null
+                        },
+                        onMoveGoalie = { target ->
+                            hockeyEngine.moveGoalie(target)
+                            hockeyUiState = hockeyEngine.state
+                        },
+                        onStartA = {
+                            hockeyEngine.startNewGame(GameMode.GAME_A)
+                            hockeyUiState = hockeyEngine.state
+                        },
+                        onStartB = {
+                            hockeyEngine.startNewGame(GameMode.GAME_B)
+                            hockeyUiState = hockeyEngine.state
+                        },
+                        onResetDemo = {
+                            hockeyEngine.resetToDemo()
+                            hockeyUiState = hockeyEngine.state
+                        },
+                        onToggleSound = {
+                            wolfEngine.toggleSound()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        },
+                        onToggleHaptics = {
+                            wolfEngine.toggleHaptics()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        }
+                    )
+                }
+
+                ClassicGameId.AUTOSLALOM -> {
+                    SlalomConsoleBody(
+                        uiState = slalomUiState,
+                        onBackToHub = {
+                            slalomEngine.resetToDemo()
+                            slalomUiState = slalomEngine.state
+                            activeGame = null
+                        },
+                        onMoveLeft = {
+                            slalomEngine.moveCarLeft()
+                            slalomUiState = slalomEngine.state
+                        },
+                        onMoveRight = {
+                            slalomEngine.moveCarRight()
+                            slalomUiState = slalomEngine.state
+                        },
+                        onStartA = {
+                            slalomEngine.startNewGame(GameMode.GAME_A)
+                            slalomUiState = slalomUiState.copy()
+                            slalomUiState = slalomEngine.state
+                        },
+                        onStartB = {
+                            slalomEngine.startNewGame(GameMode.GAME_B)
+                            slalomUiState = slalomEngine.state
+                        },
+                        onResetDemo = {
+                            slalomEngine.resetToDemo()
+                            slalomUiState = slalomEngine.state
+                        },
+                        onToggleSound = {
+                            wolfEngine.toggleSound()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        },
+                        onToggleHaptics = {
+                            wolfEngine.toggleHaptics()
+                            syncAllAudio(wolfEngine.state.soundEnabled, wolfEngine.state.hapticsEnabled)
+                        }
+                    )
+                }
             }
         }
     }
@@ -355,7 +532,6 @@ private fun JenPockejConsoleBody(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // LEVY PANEL: Klikaci kulate logo •ИМ (navrat do vyberu her) + 2 cervena tlacitka dole
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -425,7 +601,6 @@ private fun JenPockejConsoleBody(
                 }
             }
 
-            // STREDNI PANEL: Cista prerusovana cerna linka v ose napisu + zapusteny LCD
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -564,7 +739,6 @@ private fun JenPockejConsoleBody(
                 }
             }
 
-            // PRAVY PANEL: 3 ovalna tlacitka (игра А, игра Б, время) + 2 mala tlacitka + 2 cervena tlacitka dole
             Column(
                 modifier = Modifier
                     .fillMaxHeight()

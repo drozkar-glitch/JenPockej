@@ -70,21 +70,21 @@ enum class ClassicGameId(
         titleCz = "Kosmický most",
         titleRu = "Космический мост",
         subtitle = "Kosmonauti a most přes lávu",
-        isAvailable = false
+        isAvailable = true
     ),
     HOKEJ(
         code = "ИМ-22",
         titleCz = "Veselý hokej",
         titleRu = "Хоккей",
         subtitle = "Brankář chytá střely na branku",
-        isAvailable = false
+        isAvailable = true
     ),
     AUTOSLALOM(
         code = "ИМ-23",
         titleCz = "Autoslalom",
         titleRu = "Автослалом",
         subtitle = "Závodní formule mezi kužely",
-        isAvailable = false
+        isAvailable = true
     )
 }
 
@@ -96,6 +96,12 @@ fun GameHubScreen(
     oceanHighScoreB: Int = 0,
     chefHighScoreA: Int = 0,
     chefHighScoreB: Int = 0,
+    bridgeHighScoreA: Int = 0,
+    bridgeHighScoreB: Int = 0,
+    hockeyHighScoreA: Int = 0,
+    hockeyHighScoreB: Int = 0,
+    slalomHighScoreA: Int = 0,
+    slalomHighScoreB: Int = 0,
     soundEnabled: Boolean,
     hapticsEnabled: Boolean,
     onToggleSound: () -> Unit,
@@ -121,7 +127,9 @@ fun GameHubScreen(
         ClassicGameId.JEN_POCKEJ -> maxOf(highScoreA, highScoreB)
         ClassicGameId.TAJEMSTVI_OCEANU -> maxOf(oceanHighScoreA, oceanHighScoreB)
         ClassicGameId.VESELY_KUCHAR -> maxOf(chefHighScoreA, chefHighScoreB)
-        else -> 0
+        ClassicGameId.KOSMICKY_MOST -> maxOf(bridgeHighScoreA, bridgeHighScoreB)
+        ClassicGameId.HOKEJ -> maxOf(hockeyHighScoreA, hockeyHighScoreB)
+        ClassicGameId.AUTOSLALOM -> maxOf(slalomHighScoreA, slalomHighScoreB)
     }
 
     Box(
@@ -163,11 +171,7 @@ fun GameHubScreen(
                         GameCatalogCard(
                             game = game,
                             bestScore = bestScoreFor(game),
-                            onClick = {
-                                if (game.isAvailable) {
-                                    onSelectGame(game)
-                                }
-                            },
+                            onClick = { onSelectGame(game) },
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
@@ -185,11 +189,7 @@ fun GameHubScreen(
                         GameCatalogCard(
                             game = game,
                             bestScore = bestScoreFor(game),
-                            onClick = {
-                                if (game.isAvailable) {
-                                    onSelectGame(game)
-                                }
-                            },
+                            onClick = { onSelectGame(game) },
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
@@ -278,7 +278,7 @@ private fun HubHeaderBar(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "KOLEKCE ЭЛЕКТРОНИКА  •  RETRO HRY",
+                    text = "KOLEKCE ЭЛЕКТРОНИКА  •  6 RETRO HER",
                     color = Color(0xFFB52B24),
                     fontSize = 13.sp,
                     lineHeight = 14.sp,
@@ -288,7 +288,7 @@ private fun HubHeaderBar(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "Vyber hru ze sbírky klasických digitálních konzolí",
+                    text = "Vyber hru ze sbírky klasických sovětských digitálních konzolí",
                     color = Color(0xFF4A4E4A),
                     fontSize = 9.sp,
                     lineHeight = 10.sp,
@@ -380,24 +380,16 @@ private fun GameCatalogCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardBg = if (game.isAvailable) {
-        Brush.verticalGradient(
-            listOf(Color(0xFFF4F2EA), Color(0xFFE2DFD4))
-        )
-    } else {
-        Brush.verticalGradient(
-            listOf(Color(0xFFDAD7CD), Color(0xFFCAC6BC))
-        )
-    }
-    val borderColor = if (game.isAvailable) Color(0xFFB52B24) else Color(0xFF949086)
-    val borderWidth = if (game.isAvailable) 2.dp else 1.2.dp
+    val cardBg = Brush.verticalGradient(
+        listOf(Color(0xFFF4F2EA), Color(0xFFE2DFD4))
+    )
 
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .background(cardBg)
-            .border(borderWidth, borderColor, RoundedCornerShape(10.dp))
-            .clickable(enabled = game.isAvailable, onClick = onClick)
+            .border(2.dp, Color(0xFFB52B24), RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
             .padding(7.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -425,9 +417,7 @@ private fun GameCatalogCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(
-                                if (game.isAvailable) Color(0xFFB52B24) else Color(0xFF6B6961)
-                            )
+                            .background(Color(0xFFB52B24))
                             .padding(horizontal = 5.dp, vertical = 1.dp)
                     ) {
                         Text(
@@ -455,7 +445,7 @@ private fun GameCatalogCard(
 
                 Text(
                     text = game.titleCz,
-                    color = if (game.isAvailable) Color(0xFF1A1D1A) else Color(0xFF454744),
+                    color = Color(0xFF1A1D1A),
                     fontSize = 12.sp,
                     lineHeight = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -478,51 +468,29 @@ private fun GameCatalogCard(
             }
         }
 
-        if (game.isAvailable) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(25.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0xFFD62828), Color(0xFFB52B24))
-                        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(25.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0xFFD62828), Color(0xFFB52B24))
                     )
-                    .border(1.dp, Color(0xFF7A1510), RoundedCornerShape(6.dp))
-                    .clickable(onClick = onClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "▶  HRÁT HRU   (REKORD: $bestScore)",
-                    color = Color.White,
-                    fontSize = 9.sp,
-                    lineHeight = 10.sp,
-                    fontWeight = FontWeight.Black,
-                    maxLines = 1,
-                    softWrap = false
                 )
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(25.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0xFFB5B1A6))
-                    .border(1.dp, Color(0xFF8C887E), RoundedCornerShape(6.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "PŘIPRAVUJEME",
-                    color = Color(0xFF424441),
-                    fontSize = 9.sp,
-                    lineHeight = 10.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    softWrap = false
-                )
-            }
+                .border(1.dp, Color(0xFF7A1510), RoundedCornerShape(6.dp))
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "▶  HRÁT HRU   (REKORD: $bestScore)",
+                color = Color.White,
+                fontSize = 9.sp,
+                lineHeight = 10.sp,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+                softWrap = false
+            )
         }
     }
 }
@@ -553,7 +521,7 @@ private fun MiniConsoleGameIcon(
         val sw = w * 0.84f
         val sh = h * 0.82f
 
-        val btnCol = if (game.isAvailable) Color(0xFFD62828) else Color(0xFF9E3A34)
+        val btnCol = Color(0xFFD62828)
         val br = w * 0.032f
         drawCircle(btnCol, radius = br, center = Offset(w * 0.045f, h * 0.34f))
         drawCircle(btnCol, radius = br, center = Offset(w * 0.045f, h * 0.68f))
@@ -596,9 +564,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     }
     drawPath(roof, color = Color(0xFFB52B24), style = Stroke(width = sw * 0.055f, cap = StrokeCap.Round, join = StrokeJoin.Round))
 
-    drawCircle(Color(0xFF4F682C), radius = sw * 0.11f, center = Offset(sx + sw * 0.88f, sy + sh * 0.84f))
-    drawCircle(Color(0xFF4F682C), radius = sw * 0.09f, center = Offset(sx + sw * 0.14f, sy + sh * 0.86f))
-
     drawLine(
         color = Color(0xFF8C5828),
         start = Offset(sx + sw * 0.04f, sy + sh * 0.44f),
@@ -606,13 +571,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
         strokeWidth = sw * 0.055f,
         cap = StrokeCap.Round
     )
-
-    drawOval(
-        color = Color(0xFFF7F6F0),
-        topLeft = Offset(sx + sw * 0.05f, sy + sh * 0.26f),
-        size = Size(sw * 0.16f, sh * 0.17f)
-    )
-    drawCircle(Color(0xFFD62828), radius = sw * 0.03f, center = Offset(sx + sw * 0.15f, sy + sh * 0.25f))
 
     drawOval(
         color = Color(0xFFFFFDF7),
@@ -636,28 +594,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     drawPath(torso, color = Color(0xFF5D675F))
     drawPath(torso, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
 
-    val collar = Path().apply {
-        moveTo(sx + sw * 0.60f, sy + sh * 0.52f)
-        lineTo(sx + sw * 0.80f, sy + sh * 0.52f)
-        lineTo(sx + sw * 0.68f, sy + sh * 0.68f)
-        close()
-    }
-    drawPath(collar, color = Color(0xFFF5F7F2))
-    drawPath(collar, color = Color(0xFF234B75), style = Stroke(width = sw * 0.02f))
-
-    val wolfHead = Path().apply {
-        moveTo(sx + sw * 0.62f, sy + sh * 0.26f)
-        lineTo(sx + sw * 0.82f, sy + sh * 0.26f)
-        lineTo(sx + sw * 0.92f, sy + sh * 0.34f)
-        lineTo(sx + sw * 0.84f, sy + sh * 0.42f)
-        lineTo(sx + sw * 0.90f, sy + sh * 0.49f)
-        lineTo(sx + sw * 0.78f, sy + sh * 0.53f)
-        lineTo(sx + sw * 0.58f, sy + sh * 0.52f)
-        close()
-    }
-    drawPath(wolfHead, color = Color(0xFF49524B))
-    drawPath(wolfHead, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
-
     val snout = Path().apply {
         moveTo(sx + sw * 0.64f, sy + sh * 0.34f)
         lineTo(sx + sw * 0.42f, sy + sh * 0.33f)
@@ -672,32 +608,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     drawPath(snout, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
     drawCircle(color = outline, radius = sw * 0.045f, center = Offset(sx + sw * 0.43f, sy + sh * 0.33f))
 
-    drawOval(
-        color = Color.White,
-        topLeft = Offset(sx + sw * 0.59f, sy + sh * 0.28f),
-        size = Size(sw * 0.09f, sh * 0.12f)
-    )
-    drawCircle(color = outline, radius = sw * 0.022f, center = Offset(sx + sw * 0.62f, sy + sh * 0.34f))
-
-    val cap = Path().apply {
-        moveTo(sx + sw * 0.58f, sy + sh * 0.25f)
-        cubicTo(
-            sx + sw * 0.58f, sy + sh * 0.10f,
-            sx + sw * 0.84f, sy + sh * 0.10f,
-            sx + sw * 0.84f, sy + sh * 0.25f
-        )
-        close()
-    }
-    drawPath(cap, color = Color(0xFFF7F9F4))
-    drawPath(cap, color = outline, style = Stroke(width = strokeW))
-    drawLine(
-        color = outline,
-        start = Offset(sx + sw * 0.54f, sy + sh * 0.25f),
-        end = Offset(sx + sw * 0.82f, sy + sh * 0.25f),
-        strokeWidth = sw * 0.04f,
-        cap = StrokeCap.Round
-    )
-
     val basket = Path().apply {
         moveTo(sx + sw * 0.22f, sy + sh * 0.63f)
         lineTo(sx + sw * 0.58f, sy + sh * 0.63f)
@@ -707,21 +617,6 @@ private fun DrawScope.drawRichWolfIllustration(sx: Float, sy: Float, sw: Float, 
     }
     drawPath(basket, color = Color(0xFFA6662C))
     drawPath(basket, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
-    drawLine(
-        color = Color(0xFFD99B52),
-        start = Offset(sx + sw * 0.26f, sy + sh * 0.75f),
-        end = Offset(sx + sw * 0.54f, sy + sh * 0.75f),
-        strokeWidth = sw * 0.025f
-    )
-    drawArc(
-        color = Color(0xFF7A4619),
-        startAngle = 190f,
-        sweepAngle = 160f,
-        useCenter = false,
-        topLeft = Offset(sx + sw * 0.31f, sy + sh * 0.50f),
-        size = Size(sw * 0.18f, sh * 0.24f),
-        style = Stroke(width = sw * 0.035f, cap = StrokeCap.Round)
-    )
 }
 
 private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Float, sh: Float) {
@@ -734,13 +629,6 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         size = Size(sw, sh),
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
-
-    drawRoundRect(
-        color = Color(0xFFDCE8DF),
-        topLeft = Offset(sx, sy),
-        size = Size(sw, sh * 0.24f),
-        cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
-    )
     drawLine(
         color = Color(0xFF245E75),
         start = Offset(sx + sw * 0.04f, sy + sh * 0.24f),
@@ -749,64 +637,25 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         cap = StrokeCap.Round
     )
 
-    val boat = Path().apply {
-        moveTo(sx + sw * 0.08f, sy + sh * 0.16f)
-        lineTo(sx + sw * 0.36f, sy + sh * 0.16f)
-        lineTo(sx + sw * 0.31f, sy + sh * 0.24f)
-        lineTo(sx + sw * 0.13f, sy + sh * 0.24f)
-        close()
-    }
-    drawPath(boat, color = Color(0xFFD9822B))
-    drawPath(boat, color = outline, style = Stroke(width = sw * 0.02f))
-
     drawRoundRect(
         color = Color(0xFF7D481B),
         topLeft = Offset(sx + sw * 0.08f, sy + sh * 0.72f),
         size = Size(sw * 0.26f, sh * 0.20f),
         cornerRadius = CornerRadius(3f, 3f)
     )
-    drawRoundRect(
-        color = Color(0xFFFFC933),
-        topLeft = Offset(sx + sw * 0.10f, sy + sh * 0.70f),
-        size = Size(sw * 0.22f, sh * 0.08f),
-        cornerRadius = CornerRadius(2f, 2f)
-    )
-    drawRoundRect(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.08f, sy + sh * 0.72f),
-        size = Size(sw * 0.26f, sh * 0.20f),
-        cornerRadius = CornerRadius(3f, 3f),
-        style = Stroke(width = strokeW)
-    )
-
-    drawCircle(Color(0xFFE09F24), radius = sw * 0.065f, center = Offset(sx + sw * 0.24f, sy + sh * 0.44f))
-    drawCircle(outline, radius = sw * 0.065f, center = Offset(sx + sw * 0.24f, sy + sh * 0.44f), style = Stroke(width = sw * 0.02f))
-    drawLine(
-        color = outline,
-        start = Offset(sx + sw * 0.24f, sy + sh * 0.50f),
-        end = Offset(sx + sw * 0.20f, sy + sh * 0.65f),
-        strokeWidth = sw * 0.07f,
-        cap = StrokeCap.Round
-    )
 
     val octopusColor = Color(0xFFB8323C)
-    val tentacleCoords = listOf(
+    for ((mx, my, endPt) in listOf(
         Triple(0.56f, 0.62f, 0.38f to 0.84f),
-        Triple(0.62f, 0.68f, 0.50f to 0.90f),
-        Triple(0.70f, 0.70f, 0.66f to 0.92f),
-        Triple(0.78f, 0.68f, 0.82f to 0.90f),
-        Triple(0.84f, 0.62f, 0.93f to 0.78f)
-    )
-    for ((mx, my, endPt) in tentacleCoords) {
+        Triple(0.68f, 0.70f, 0.58f to 0.92f),
+        Triple(0.80f, 0.66f, 0.86f to 0.88f)
+    )) {
         val tPath = Path().apply {
             moveTo(sx + sw * 0.68f, sy + sh * 0.52f)
-            quadraticTo(
-                sx + sw * mx, sy + sh * my,
-                sx + sw * endPt.first, sy + sh * endPt.second
-            )
+            quadraticTo(sx + sw * mx, sy + sh * my, sx + sw * endPt.first, sy + sh * endPt.second)
         }
-        drawPath(tPath, color = outline, style = Stroke(width = sw * 0.075f, cap = StrokeCap.Round))
-        drawPath(tPath, color = octopusColor, style = Stroke(width = sw * 0.048f, cap = StrokeCap.Round))
+        drawPath(tPath, color = outline, style = Stroke(width = sw * 0.07f, cap = StrokeCap.Round))
+        drawPath(tPath, color = octopusColor, style = Stroke(width = sw * 0.045f, cap = StrokeCap.Round))
     }
 
     drawOval(
@@ -820,11 +669,8 @@ private fun DrawScope.drawRichOctopusIllustration(sx: Float, sy: Float, sw: Floa
         size = Size(sw * 0.36f, sh * 0.34f),
         style = Stroke(width = strokeW)
     )
-
     drawCircle(Color.White, radius = sw * 0.055f, center = Offset(sx + sw * 0.61f, sy + sh * 0.42f))
     drawCircle(Color.White, radius = sw * 0.055f, center = Offset(sx + sw * 0.73f, sy + sh * 0.42f))
-    drawCircle(outline, radius = sw * 0.026f, center = Offset(sx + sw * 0.60f, sy + sh * 0.43f))
-    drawCircle(outline, radius = sw * 0.026f, center = Offset(sx + sw * 0.72f, sy + sh * 0.43f))
 }
 
 private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, sh: Float) {
@@ -838,14 +684,6 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
 
-    drawLine(
-        color = Color(0xFF8C5828),
-        start = Offset(sx + sw * 0.06f, sy + sh * 0.22f),
-        end = Offset(sx + sw * 0.46f, sy + sh * 0.22f),
-        strokeWidth = sw * 0.04f,
-        cap = StrokeCap.Round
-    )
-
     val coat = Path().apply {
         moveTo(sx + sw * 0.56f, sy + sh * 0.58f)
         lineTo(sx + sw * 0.88f, sy + sh * 0.58f)
@@ -855,55 +693,11 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
     }
     drawPath(coat, color = Color(0xFFF7F7F2))
     drawPath(coat, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
-    drawCircle(outline, radius = sw * 0.018f, center = Offset(sx + sw * 0.66f, sy + sh * 0.70f))
-    drawCircle(outline, radius = sw * 0.018f, center = Offset(sx + sw * 0.66f, sy + sh * 0.82f))
 
-    val scarf = Path().apply {
-        moveTo(sx + sw * 0.60f, sy + sh * 0.56f)
-        lineTo(sx + sw * 0.82f, sy + sh * 0.56f)
-        lineTo(sx + sw * 0.70f, sy + sh * 0.68f)
-        close()
-    }
-    drawPath(scarf, color = Color(0xFFD62828))
+    drawCircle(Color(0xFFF2C9A0), radius = sw * 0.13f, center = Offset(sx + sw * 0.72f, sy + sh * 0.45f))
+    drawCircle(outline, radius = sw * 0.13f, center = Offset(sx + sw * 0.72f, sy + sh * 0.45f), style = Stroke(width = strokeW))
 
-    drawCircle(
-        color = Color(0xFFF2C9A0),
-        radius = sw * 0.13f,
-        center = Offset(sx + sw * 0.72f, sy + sh * 0.45f)
-    )
-    drawCircle(
-        color = outline,
-        radius = sw * 0.13f,
-        center = Offset(sx + sw * 0.72f, sy + sh * 0.45f),
-        style = Stroke(width = strokeW)
-    )
-    drawCircle(outline, radius = sw * 0.02f, center = Offset(sx + sw * 0.67f, sy + sh * 0.43f))
-    drawCircle(Color(0xFFD96B52), radius = sw * 0.032f, center = Offset(sx + sw * 0.62f, sy + sh * 0.46f))
-    drawLine(
-        color = outline,
-        start = Offset(sx + sw * 0.58f, sy + sh * 0.50f),
-        end = Offset(sx + sw * 0.73f, sy + sh * 0.49f),
-        strokeWidth = sw * 0.032f,
-        cap = StrokeCap.Round
-    )
-
-    drawCircle(Color.White, radius = sw * 0.09f, center = Offset(sx + sw * 0.63f, sy + sh * 0.22f))
-    drawCircle(Color.White, radius = sw * 0.10f, center = Offset(sx + sw * 0.73f, sy + sh * 0.18f))
-    drawCircle(Color.White, radius = sw * 0.09f, center = Offset(sx + sw * 0.82f, sy + sh * 0.22f))
-    drawRoundRect(
-        color = Color.White,
-        topLeft = Offset(sx + sw * 0.58f, sy + sh * 0.22f),
-        size = Size(sw * 0.28f, sh * 0.14f),
-        cornerRadius = CornerRadius(3f, 3f)
-    )
-    drawRoundRect(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.58f, sy + sh * 0.28f),
-        size = Size(sw * 0.28f, sh * 0.08f),
-        cornerRadius = CornerRadius(2f, 2f),
-        style = Stroke(width = strokeW)
-    )
-
+    drawCircle(Color.White, radius = sw * 0.10f, center = Offset(sx + sw * 0.72f, sy + sh * 0.20f))
     drawLine(
         color = outline,
         start = Offset(sx + sw * 0.36f, sy + sh * 0.71f),
@@ -919,24 +713,7 @@ private fun DrawScope.drawRichChefIllustration(sx: Float, sy: Float, sw: Float, 
         close()
     }
     drawPath(pan, color = Color(0xFF2B2F2E))
-    drawPath(pan, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
-
-    drawOval(
-        color = Color(0xFFC43B2B),
-        topLeft = Offset(sx + sw * 0.12f, sy + sh * 0.42f),
-        size = Size(sw * 0.22f, sh * 0.11f)
-    )
-    drawOval(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.12f, sy + sh * 0.42f),
-        size = Size(sw * 0.22f, sh * 0.11f),
-        style = Stroke(width = sw * 0.02f)
-    )
-    drawOval(
-        color = Color(0xFFD98A2B),
-        topLeft = Offset(sx + sw * 0.26f, sy + sh * 0.26f),
-        size = Size(sw * 0.18f, sh * 0.11f)
-    )
+    drawOval(Color(0xFFC43B2B), topLeft = Offset(sx + sw * 0.12f, sy + sh * 0.42f), size = Size(sw * 0.22f, sh * 0.11f))
 }
 
 private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: Float, sh: Float) {
@@ -955,35 +732,13 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
         size = Size(sw, sh * 0.34f),
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
-
     drawCircle(Color(0xFFF2C14E), radius = sw * 0.065f, center = Offset(sx + sw * 0.78f, sy + sh * 0.17f))
-    drawLine(
-        color = Color(0xFFF7E3A1),
-        start = Offset(sx + sw * 0.67f, sy + sh * 0.21f),
-        end = Offset(sx + sw * 0.89f, sy + sh * 0.13f),
-        strokeWidth = sw * 0.022f,
-        cap = StrokeCap.Round
-    )
-    drawCircle(Color.White, radius = sw * 0.015f, center = Offset(sx + sw * 0.22f, sy + sh * 0.14f))
-    drawCircle(Color.White, radius = sw * 0.015f, center = Offset(sx + sw * 0.45f, sy + sh * 0.11f))
-
     drawRoundRect(
         color = Color(0xFFD93829),
         topLeft = Offset(sx + sw * 0.04f, sy + sh * 0.82f),
         size = Size(sw * 0.92f, sh * 0.14f),
         cornerRadius = CornerRadius(4f, 4f)
     )
-
-    val leftCliff = Path().apply {
-        moveTo(sx, sy + sh * 0.48f)
-        lineTo(sx + sw * 0.22f, sy + sh * 0.48f)
-        lineTo(sx + sw * 0.16f, sy + sh * 0.94f)
-        lineTo(sx, sy + sh * 0.94f)
-        close()
-    }
-    drawPath(leftCliff, color = Color(0xFF6E5A4F))
-    drawPath(leftCliff, color = outline, style = Stroke(width = strokeW))
-
     drawRoundRect(
         color = Color(0xFF3B6E8C),
         topLeft = Offset(sx + sw * 0.28f, sy + sh * 0.64f),
@@ -997,38 +752,8 @@ private fun DrawScope.drawRichSpaceBridgeIllustration(sx: Float, sy: Float, sw: 
         cornerRadius = CornerRadius(4f, 4f),
         style = Stroke(width = strokeW)
     )
-    drawLine(
-        color = outline,
-        start = Offset(sx + sw * 0.24f, sy + sh * 0.55f),
-        end = Offset(sx + sw * 0.78f, sy + sh * 0.55f),
-        strokeWidth = sw * 0.045f,
-        cap = StrokeCap.Round
-    )
-    for (wx in listOf(0.35f, 0.51f, 0.67f)) {
-        drawCircle(outline, radius = sw * 0.055f, center = Offset(sx + sw * wx, sy + sh * 0.82f))
-        drawCircle(Color(0xFFD8D5CC), radius = sw * 0.022f, center = Offset(sx + sw * wx, sy + sh * 0.82f))
-    }
-
     drawCircle(Color.White, radius = sw * 0.085f, center = Offset(sx + sw * 0.50f, sy + sh * 0.27f))
     drawCircle(outline, radius = sw * 0.085f, center = Offset(sx + sw * 0.50f, sy + sh * 0.27f), style = Stroke(width = sw * 0.022f))
-    drawOval(
-        color = Color(0xFFE5A93B),
-        topLeft = Offset(sx + sw * 0.45f, sy + sh * 0.22f),
-        size = Size(sw * 0.11f, sh * 0.09f)
-    )
-    drawRoundRect(
-        color = Color.White,
-        topLeft = Offset(sx + sw * 0.43f, sy + sh * 0.36f),
-        size = Size(sw * 0.14f, sh * 0.17f),
-        cornerRadius = CornerRadius(3f, 3f)
-    )
-    drawRoundRect(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.43f, sy + sh * 0.36f),
-        size = Size(sw * 0.14f, sh * 0.17f),
-        cornerRadius = CornerRadius(3f, 3f),
-        style = Stroke(width = sw * 0.022f)
-    )
 }
 
 private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float, sh: Float) {
@@ -1042,26 +767,13 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
         cornerRadius = CornerRadius(sw * 0.07f, sw * 0.07f)
     )
 
-    drawArc(
-        color = Color(0xFF8AB4CC),
-        startAngle = 180f,
-        sweepAngle = 180f,
-        useCenter = true,
-        topLeft = Offset(sx + sw * 0.18f, sy + sh * 0.68f),
-        size = Size(sw * 0.64f, sh * 0.40f)
-    )
-
     val goalFrame = Path().apply {
         moveTo(sx + sw * 0.14f, sy + sh * 0.84f)
         lineTo(sx + sw * 0.14f, sy + sh * 0.20f)
         lineTo(sx + sw * 0.86f, sy + sh * 0.20f)
         lineTo(sx + sw * 0.86f, sy + sh * 0.84f)
     }
-    drawPath(
-        path = goalFrame,
-        color = Color(0xFFC42B23),
-        style = Stroke(width = sw * 0.055f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    )
+    drawPath(goalFrame, color = Color(0xFFC42B23), style = Stroke(width = sw * 0.055f, cap = StrokeCap.Round, join = StrokeJoin.Round))
 
     val jersey = Path().apply {
         moveTo(sx + sw * 0.44f, sy + sh * 0.46f)
@@ -1073,55 +785,9 @@ private fun DrawScope.drawRichHockeyIllustration(sx: Float, sy: Float, sw: Float
     drawPath(jersey, color = Color(0xFFD62828))
     drawPath(jersey, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
 
-    drawLine(
-        color = Color.White,
-        start = Offset(sx + sw * 0.43f, sy + sh * 0.68f),
-        end = Offset(sx + sw * 0.77f, sy + sh * 0.68f),
-        strokeWidth = sw * 0.04f
-    )
-
-    drawOval(
-        color = Color.White,
-        topLeft = Offset(sx + sw * 0.50f, sy + sh * 0.24f),
-        size = Size(sw * 0.20f, sh * 0.24f)
-    )
-    drawOval(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.50f, sy + sh * 0.24f),
-        size = Size(sw * 0.20f, sh * 0.24f),
-        style = Stroke(width = strokeW)
-    )
-    drawCircle(outline, radius = sw * 0.018f, center = Offset(sx + sw * 0.56f, sy + sh * 0.34f))
-    drawCircle(outline, radius = sw * 0.018f, center = Offset(sx + sw * 0.63f, sy + sh * 0.34f))
-
-    val stick = Path().apply {
-        moveTo(sx + sw * 0.48f, sy + sh * 0.56f)
-        lineTo(sx + sw * 0.28f, sy + sh * 0.84f)
-        lineTo(sx + sw * 0.12f, sy + sh * 0.80f)
-    }
-    drawPath(
-        path = stick,
-        color = Color(0xFF8C5322),
-        style = Stroke(width = sw * 0.055f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    )
-    drawPath(
-        path = stick,
-        color = outline,
-        style = Stroke(width = sw * 0.02f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    )
-
-    drawOval(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.18f, sy + sh * 0.42f),
-        size = Size(sw * 0.15f, sh * 0.09f)
-    )
-    drawLine(
-        color = Color(0xFF5A6B75),
-        start = Offset(sx + sw * 0.07f, sy + sh * 0.36f),
-        end = Offset(sx + sw * 0.18f, sy + sh * 0.43f),
-        strokeWidth = sw * 0.025f,
-        cap = StrokeCap.Round
-    )
+    drawOval(Color.White, topLeft = Offset(sx + sw * 0.50f, sy + sh * 0.24f), size = Size(sw * 0.20f, sh * 0.24f))
+    drawOval(outline, topLeft = Offset(sx + sw * 0.50f, sy + sh * 0.24f), size = Size(sw * 0.20f, sh * 0.24f), style = Stroke(width = strokeW))
+    drawOval(outline, topLeft = Offset(sx + sw * 0.18f, sy + sh * 0.42f), size = Size(sw * 0.15f, sh * 0.09f))
 }
 
 private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float, sh: Float) {
@@ -1145,54 +811,6 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
     drawPath(road, color = Color(0xFFC8CCC2))
     drawPath(road, color = outline, style = Stroke(width = strokeW))
 
-    drawLine(
-        color = Color(0xFFD62828),
-        start = Offset(sx + sw * 0.36f, sy + sh * 0.08f),
-        end = Offset(sx + sw * 0.10f, sy + sh * 0.92f),
-        strokeWidth = sw * 0.045f,
-        cap = StrokeCap.Round
-    )
-    drawLine(
-        color = Color(0xFFD62828),
-        start = Offset(sx + sw * 0.64f, sy + sh * 0.08f),
-        end = Offset(sx + sw * 0.90f, sy + sh * 0.92f),
-        strokeWidth = sw * 0.045f,
-        cap = StrokeCap.Round
-    )
-
-    drawLine(
-        color = Color(0xFFF5F7F2),
-        start = Offset(sx + sw * 0.50f, sy + sh * 0.12f),
-        end = Offset(sx + sw * 0.50f, sy + sh * 0.30f),
-        strokeWidth = sw * 0.03f,
-        cap = StrokeCap.Round
-    )
-
-    drawRoundRect(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.27f, sy + sh * 0.42f),
-        size = Size(sw * 0.11f, sh * 0.16f),
-        cornerRadius = CornerRadius(3f, 3f)
-    )
-    drawRoundRect(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.62f, sy + sh * 0.42f),
-        size = Size(sw * 0.11f, sh * 0.16f),
-        cornerRadius = CornerRadius(3f, 3f)
-    )
-    drawRoundRect(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.23f, sy + sh * 0.68f),
-        size = Size(sw * 0.13f, sh * 0.20f),
-        cornerRadius = CornerRadius(3f, 3f)
-    )
-    drawRoundRect(
-        color = outline,
-        topLeft = Offset(sx + sw * 0.64f, sy + sh * 0.68f),
-        size = Size(sw * 0.13f, sh * 0.20f),
-        cornerRadius = CornerRadius(3f, 3f)
-    )
-
     val carBody = Path().apply {
         moveTo(sx + sw * 0.45f, sy + sh * 0.30f)
         lineTo(sx + sw * 0.55f, sy + sh * 0.30f)
@@ -1204,13 +822,5 @@ private fun DrawScope.drawRichSlalomIllustration(sx: Float, sy: Float, sw: Float
     }
     drawPath(carBody, color = Color(0xFFD62828))
     drawPath(carBody, color = outline, style = Stroke(width = strokeW, join = StrokeJoin.Round))
-
-    drawRoundRect(
-        color = Color(0xFFF5F7F2),
-        topLeft = Offset(sx + sw * 0.34f, sy + sh * 0.28f),
-        size = Size(sw * 0.32f, sh * 0.07f),
-        cornerRadius = CornerRadius(2f, 2f)
-    )
     drawCircle(Color.White, radius = sw * 0.065f, center = Offset(sx + sw * 0.50f, sy + sh * 0.60f))
-    drawCircle(outline, radius = sw * 0.065f, center = Offset(sx + sw * 0.50f, sy + sh * 0.60f), style = Stroke(width = sw * 0.02f))
 }

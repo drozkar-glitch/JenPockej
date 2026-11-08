@@ -348,7 +348,7 @@ fun LeaderboardScreen(
                 }
             }
 
-            // 2. PŘEPÍNAČ HRY (ИМ-02, ИМ-03, ИМ-04) A KATEGORIE (HRA A / HRA B)
+            // 2. PŘEPÍNAČ VŠECH 6 HER (ИМ-02 až ИМ-23) A KATEGORIE (HRA A / HRA B)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -357,11 +357,10 @@ fun LeaderboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val availableGames = ClassicGameId.entries.filter { it.isAvailable }
-                    for (game in availableGames) {
+                    for (game in ClassicGameId.entries) {
                         val isSel = game == selectedGame
                         Box(
                             modifier = Modifier
@@ -374,11 +373,11 @@ fun LeaderboardScreen(
                                     RoundedCornerShape(6.dp)
                                 )
                                 .clickable { selectedGame = game }
-                                .padding(horizontal = 9.dp),
+                                .padding(horizontal = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "${game.code} ${game.titleCz}",
+                                text = game.code,
                                 color = if (isSel) Color.White else Color(0xFF232724),
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.ExtraBold,
@@ -422,8 +421,7 @@ fun LeaderboardScreen(
                 }
             }
 
-            // 3. PANEL HRÁČE: Zobrazí zadávací pole POUZE pokud nick ještě není uložen,
-            // po uložení se pole trvale zamkne a zmizí (zůstane jen proužek s 11.sp)
+            // 3. PANEL HRÁČE: Zobrazí zadávací pole POUZE pokud nick ještě není uložen
             if (savedNick.isBlank()) {
                 Row(
                     modifier = Modifier
