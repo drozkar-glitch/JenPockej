@@ -65,6 +65,8 @@ jobs:
             fi
             curl -sfL -H "Authorization: Bearer $VAULT_TOKEN" -H "Accept: application/vnd.github.raw" \
               "https://api.github.com/repos/${OWNER}/ios-keys/contents/gplaykey.json.b64" -o "iosApp/signing/gplaykey.json.b64" || rm -f "iosApp/signing/gplaykey.json.b64"
+            curl -sfL -H "Authorization: Bearer $VAULT_TOKEN" -H "Accept: application/vnd.github.raw" \
+              "https://api.github.com/repos/${OWNER}/ios-keys/contents/store_google_huawei.py" -o "iosApp/signing/store_google_huawei.py" || rm -f "iosApp/signing/store_google_huawei.py"
             for hf in huawei_key.json.b64 huaweikey.json.b64 agconnect_key.json.b64; do
               if curl -sfL -H "Authorization: Bearer $VAULT_TOKEN" -H "Accept: application/vnd.github.raw" \
                 "https://api.github.com/repos/${OWNER}/ios-keys/contents/${hf}" -o "iosApp/signing/huawei_key.json.b64"; then break; fi
@@ -105,10 +107,13 @@ jobs:
           path: |
             composeApp/build/outputs/apk/release/*.apk
             composeApp/build/outputs/bundle/release/*.aab
-      - name: Publish Android AAB to Google Play (Internal Testing)
+      - name: Publish Android to Google Play & Huawei AppGallery
         run: |
           if [ "$PUBLISH_TO_STORES" != "true" ]; then
             echo "ℹ️ Publikace do obchodu je vypnuta. Preskakuji Google Play."
+          elif [ -s "iosApp/signing/store_google_huawei.py" ]; then
+            pip3 install --quiet --break-system-packages google-api-python-client google-auth-httplib2 google-auth-oauthlib pyjwt cryptography requests Pillow resvg-py || pip3 install --quiet google-api-python-client google-auth-httplib2 google-auth-oauthlib pyjwt cryptography requests Pillow resvg-py || pip3 install --quiet --break-system-packages google-api-python-client google-auth-httplib2 google-auth-oauthlib pyjwt cryptography requests Pillow || pip3 install --quiet google-api-python-client google-auth-httplib2 google-auth-oauthlib pyjwt cryptography requests Pillow
+            python3 iosApp/signing/store_google_huawei.py
           elif [ -s "iosApp/signing/gplaykey.json.b64" ]; then
             base64 --decode < iosApp/signing/gplaykey.json.b64 > /tmp/gplay_key.json
             pip3 install --quiet --break-system-packages google-api-python-client google-auth-httplib2 google-auth-oauthlib || pip3 install --quiet google-api-python-client google-auth-httplib2 google-auth-oauthlib
@@ -165,6 +170,8 @@ jobs:
         run: |
           if [ "$PUBLISH_TO_STORES" != "true" ]; then
             echo "ℹ️ Publikace do obchodu je vypnuta. Preskakuji Huawei AppGallery."
+          elif [ -s "iosApp/signing/store_google_huawei.py" ]; then
+            echo "✅ Huawei AppGallery uz bylo zpracovano spolecnym skriptem store_google_huawei.py."
           elif [ -s "iosApp/signing/huawei_key.json.b64" ]; then
             base64 --decode < iosApp/signing/huawei_key.json.b64 > /tmp/huawei_key.json
             pip3 install --quiet --break-system-packages pyjwt cryptography requests || pip3 install --quiet pyjwt cryptography requests
@@ -252,7 +259,7 @@ jobs:
         run: |
           mkdir -p iosApp/signing
           if [ -n "$VAULT_TOKEN" ]; then
-            for f in ioskey.p12.b64 ioskey.pwd apple_api_key.p8.b64 apple_api_key.props; do
+            for f in ioskey.p12.b64 ioskey.pwd apple_api_key.p8.b64 apple_api_key.props gplaykey.json.b64 store_ios_asc.py; do
               curl -sfL -H "Authorization: Bearer $VAULT_TOKEN" -H "Accept: application/vnd.github.raw" \
                 "https://api.github.com/repos/${OWNER}/ios-keys/contents/${f}" -o "iosApp/signing/${f}" || rm -f "iosApp/signing/${f}"
             done
@@ -709,7 +716,10 @@ jobs:
                       requests.put(url, headers=hdrs, json={"message": f"Automaticka aktualizace hlavni verze na {new_ver} [skip ci]", "content": base64.b64encode(updated.encode("utf-8")).decode("utf-8"), "sha": d["sha"]}, timeout=30)
           PYEOF
             fi
-            if [ "$UPLOAD_OK" = "1" ] && [ "$APP_NOT_IN_ASC" = "0" ]; then
+            if [ "$UPLOAD_OK" = "1" ] && [ "$APP_NOT_IN_ASC" = "0" ] && [ -s "iosApp/signing/store_ios_asc.py" ]; then
+              pip3 install --quiet --break-system-packages google-api-python-client google-auth-httplib2 google-auth-oauthlib pyjwt cryptography requests Pillow || pip3 install --quiet google-api-python-client google-auth-httplib2 google-auth-oauthlib pyjwt cryptography requests Pillow || true
+              python3 iosApp/signing/store_ios_asc.py
+            elif [ "$UPLOAD_OK" = "1" ] && [ "$APP_NOT_IN_ASC" = "0" ]; then
               python3 - << 'PYEOF'
           import os, sys, time, jwt, requests
           key_id = os.environ.get("APP_STORE_CONNECT_KEY_IDENTIFIER", "").strip()
@@ -891,4 +901,4 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-iOS-IPA
           path: build/ios/ipa/*.ipa
-# Sync: 2026-11-10T14:31:00.853Z
+# Sync: 2026-11-10T15:14:15.883Z
